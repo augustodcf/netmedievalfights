@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="zxx">
+
+<head>
+</head>
+
+<body>
+        
+        <form action="/register" method="POST">
+          {{ form.csrf_token }} <br><br>
+          <a>Username: </a>{{form.username}} <br><br>
+          <a>Email: </a>{{form.email}} <br><br>
+          <a>Password: </a>{{form.psw}} <br><br>
+          <a>Repeat password: </a>{{form.repassword}}<br><br>
+          <input type = "submit" value = "Submit"><br><br>
+<br>
+          <p>Already have an account? <a href="/login">Sign in</a>.</p>
+
+</body>
+
+</html>
