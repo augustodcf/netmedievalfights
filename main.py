@@ -7,11 +7,13 @@ from flask_wtf import FlaskForm, Form
 from wtforms import StringField, SubmitField, SelectFieldBase, PasswordField
 from wtforms.validators import DataRequired
 from flask_debug import Debug
+from flask_bootstrap import Bootstrap
 
 
 
 app = Flask(__name__)
 
+Bootstrap(app)
 Debug(app)
 app.secret_key = b"""_5#y2L"F4Q8z\n\xec]/"""
 app.config["SQLALCHEMY_DATABASE_URI"] = """mysql://root:6=2Cxl{3t6}g[pD@localhost/medievalfights"""
@@ -219,13 +221,23 @@ def logout():
 @app.route("/pageadm", methods=['GET', 'POST'])
 @login_required
 def pageadm():
-    allusers = User.query.all()
-    for user in allusers:
-        print(user.idUser)
-        for page in user.pages:
-            print(page.idpage)
-        print()
-    return dict()
+    table = {'headers': ['Name', 'Relationship', 'Share'],
+             'contents': []
+             }
+    for page in current_user.pages:
+        relation = db.select([User_has_page]).where(User_has_page.c.page_idpage == page.idpage).where(User_has_page.c.user_id == current_user.idUser)
+        relation = relation.compile(compile_kwargs={"literal_binds": True})
+
+        dic = {'Name': page.nome,
+                'Relationship': relation.user_has_page_relationtype,
+                'Share': 'Preencher no futuro' ,
+                }
+        table['contents'].append(dic)
+    print(paginasdouser)
+
+    # User_has_page.query.filter_by(page_idpage = page.idpage, user_id = current_user.idUser).first().user_has_page_relationtype,
+
+    return render_template('beko/userhaspages.html',table = table)
 
 @app.route("/pageregister", methods=['GET','POST'])
 @login_required
