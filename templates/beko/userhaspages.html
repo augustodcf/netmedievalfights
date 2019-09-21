@@ -1,0 +1,29 @@
+      <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+      
+<form action="/pageadm"  method="POST">
+<table class="table table-striped table-dark">
+	<thead>
+		<tr>
+			{% for column in table.headers %}
+			<th>{{column}}</th>
+			{% endfor %}
+		</tr>
+	</thead>
+	<tbody>
+		{% for row in table.contents %}
+			<tr>
+				{% for column in table.headers %}
+				<td>
+					{% if row[column] == "☑" %}
+						<input type = "checkbox" name = check_{{row['Name']}} valor = "selection">
+					{% else %}
+						{{row[column]}}
+					{% endif %}
+				</td>
+				{% endfor %}
+			</tr>
+		{% endfor %}
+	</tbody>
+</table>
+<input type="submit" value="Share">
+</form>
