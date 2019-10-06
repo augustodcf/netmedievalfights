@@ -2,16 +2,54 @@
 <html lang="zxx">
 
 <head>
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 </head>
 
-<body>
-        
-        <form action="/shareselection" method="POST">
-          {{ form.csrf_token }} <br><br>
-          <a>User name: </a>{{form.username}} <br><br>
-          <input type = "submit" value = "Submit"><br><br>
-<br>
+<body style="background-color: rgb(21, 32, 43)>
 
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+{# Loads some of the macros included with Flask-Bootstrap. We are using the
+   utils module here to automatically render Flask's flashed messages in a
+   bootstrap friendly manner #}
+{% import "bootstrap/utils.html" as utils %}
+
+
+        {%- with messages = get_flashed_messages(with_categories=True) %}
+  {%- if messages %}
+    <div class="row">
+      <div class="col-md-12">
+        {{utils.flashed_messages(messages)}}
+      </div>
+    </div>
+  {%- endif %}
+  {%- endwith %}
+
+  	<div class="form">
+        <form action="/shareselection" method="POST" style="padding-left:12px; padding-right:12px; padding-bottom: 12px;  ">
+          {{ form.csrf_token }} <br><br>
+          <h7> User name to share edition:  </h7>{{form.username}} <br><br>
+          <input type = "submit" value = "Submit">
+        </form>
+    </div>
+
+<style type="text/css">
+	div.form {
+		 margin: 0;
+    	 background: rgb(69, 77, 85);
+    	 position: absolute;
+    	 top: 50%;
+    	 left: 50%;
+    	 margin-right: -50%;
+    	 transform: translate(-50%, -50%);
+    	 color: white; 
+    	}
+	body {
+		
+		
+	}
+
+</style>
 
 </body>
 

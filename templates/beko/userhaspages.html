@@ -1,7 +1,31 @@
-      <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
       
-<form action="/pageadm"  method="POST">
+{# Loads some of the macros included with Flask-Bootstrap. We are using the
+   utils module here to automatically render Flask's flashed messages in a
+   bootstrap friendly manner #}
+{% import "bootstrap/utils.html" as utils %}
+
+	
+        {%- with messages = get_flashed_messages(with_categories=True) %}
+
+  {%- if messages %}
+    <div class="row">
+      <div class="col-md-12">
+        {{utils.flashed_messages(messages)}}
+      </div>
+    </div>
+  {%- endif %}
+  {%- endwith %}
+
+
+
+      <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+{% if pagetype == 0 %}     
+<form id="selection" action="/pageadmo"  method="POST" onsubmit="return false;">
 <table class="table table-striped table-dark">
+{% elif pagetype == 1 %}
+<form action="/pageadme"  method="POST">
+<table class="table table-striped table-dark">
+{% endif %}
 	<thead>
 		<tr>
 			{% for column in table.headers %}
@@ -25,5 +49,24 @@
 		{% endfor %}
 	</tbody>
 </table>
-<input type="submit" value="Share">
+{% if pagetype == 0 %}  
+<input type="submit" value="Share" onclick="submit()">
+<button onclick="newpage()" >New Page</button>
+{% elif pagetype == 1 %}
+<input type="submit" value="Abdicate" onclick="submit()">
+{% endif %}
 </form>
+
+
+
+
+<script type="text/javascript">
+	function submit(){
+		document.getElementById('selection').submit();
+	}
+
+	function newpage(){
+		window.location.href ="/pageregister";
+	}
+
+</script>

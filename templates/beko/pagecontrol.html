@@ -1,52 +1,93 @@
 <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-
+<html lang="en">
 <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+  <!-- script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script-->
+  <!--script src='https://code.jquery.com/jquery-3.4.1.js'></script-->
+	
+	<script type="text/javascript">
+
+function showOwner() {
+  document.getElementById("Editor").style.display = "none";
+  document.getElementById("Owner").style.display = "block";  
+  document.getElementById("Bailiff").style.display = "none";
+  document.getElementById("Concill").style.display = "none";
+}  
+
+function showEditor() {
+  document.getElementById("Owner").style.display = "none";
+  document.getElementById("Editor").style.display = "block";
+  document.getElementById("Bailiff").style.display = "none";
+  document.getElementById("Concill").style.display = "none";
+}
+
+function showBailiff() {
+  document.getElementById("Editor").style.display = "none";
+  document.getElementById("Owner").style.display = "none";
+  document.getElementById("Concill").style.display = "none";
+  document.getElementById("Bailiff").style.display = "block";
+}
+
+function showConcill() {
+  document.getElementById("Editor").style.display = "none";
+  document.getElementById("Owner").style.display = "none";
+  document.getElementById("Bailiff").style.display = "none";
+  document.getElementById("Concill").style.display = "block";
+}
+
+	</script>
 
 
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg navbar-light bg-light">
-  <a class="navbar-brand" href="#">Medieval Fights</a>
-  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#conteudoNavbarSuportado" aria-controls="conteudoNavbarSuportado" aria-expanded="false" aria-label="Alterna navegação">
-    <span class="navbar-toggler-icon"></span>
-  </button>
+<div class="container">
+	<h3>Page Control</h3>
+ <ul class="list-inline">
+  <li><a id="tabselect" onclick="showOwner()" href="#Owner">Owner</a></li>
+  <li><a id="tabselect" onclick="showEditor()" href="#Editor">Editor</a></li>
+  {% if thisUserPower != None %}
+  <li><a id="tabselect" onclick="showBailiff()" href="#Bailiff">Bailiff</a></li>
+  {% endif %}
+  {% if thisUserPower == 1 %}
+  <li><a id="tabselect" onclick="showConcill()" href="#Concill">Concill</a></li>
+  {% endif %}
+</ul>
+<div>
 
-  <div class="collapse navbar-collapse" id="conteudoNavbarSuportado">
-    <ul class="navbar-nav mr-auto">
-      <li class="nav-item active">
-        <a class="nav-link" href="http://localhost:5000/">Home <span class="sr-only">(página atual)</span></a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="#">Link</a>
-      </li>
-      <li class="nav-item dropdown">
-        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-          Dropdown
-        </a>
-        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-          <a class="dropdown-item" href="#">Ação</a>
-          <a class="dropdown-item" href="#">Outra ação</a>
-          <div class="dropdown-divider"></div>
-          <a class="dropdown-item" href="#">Algo mais aqui</a>
-        </div>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link disabled" href="#">Desativado</a>
-      </li>
-    </ul>
-    <form class="form-inline my-2 my-lg-0">
-      <input class="form-control mr-sm-2" type="search" placeholder="Pesquisar" aria-label="Pesquisar">
-      <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Pesquisar</button>
-    </form>
-  </div>
-</nav>
-
-
-	<div class="container">
-		<div class="embed-responsive embed-responsive-21by9">
- 			 <iframe class="embed-responsive-item" src="	http://localhost:5000/pageadm"></iframe>
-    	</div>
+<div class="tab-content" > <!--style="display: none"-->
+	<div id="Owner" class="" style="width: 100%; height: 90%">
+ 			 <iframe style="width: 100%; height: 90%;" src="http://localhost:5000/pageadmo">
+ 			 </iframe>
     </div>
+
+
+    <div id="Editor" style="display: none; width: 100%; height: 90%" >
+ 			 <iframe style="width: 100%; height: 90%" src="http://localhost:5000/pageadme"></iframe>
+    </div>
+	
+	
+    <div id="Bailiff" style="display: none; width: 100%; height: 90%" >
+ 			{% if thisUserPower != None %} 
+ 			 <a>bailiff page</a>
+ 			{% else %}
+ 			 <a>Nothing for you here.</a>
+ 			{% endif %}	 
+    </div>
+    
+    
+    <div id="Concill" style="display: none; width: 100%; height: 90%" >
+ 			{% if thisUserPower == 1 %} 
+ 			 <a>Concill page</a>
+ 			{% else %}
+ 			 <a>Nothing for you here</a>
+ 			{% endif %}	 
+    </div>
+    
+</div>
+
+
 
 </body>
