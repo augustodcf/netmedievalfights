@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zxx">
+<html lang="en">
 
 <head>
 	<!-- Required meta tags -->
@@ -28,19 +28,27 @@
 </head>
 
 <body>
+	
 	<form action="/login" method="POST">
 	  Login:<br>
 	  <input type="text" name="username"><br>
 	  Password:<br>
 	  <input type="password" name="password">
-	  <input type="submit" name="titslogin">
+	  <button>Send</button>
 	</form>
  
  <a>Don't you have an account yet?</a><br><a href="/register"> Click here do register
  </a>
-
+ 	
 </body>
-
+ 
+ <script>
+  document.onkeyup = function(e) {
+  if (e.which == 13) {
+    document.getElementById('selection').submit();
+  }
+};
+</script>
 
 
 </html>

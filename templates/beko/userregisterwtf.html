@@ -1,16 +1,24 @@
 <!doctype html>
 <html lang="zxx">
 
-{% with messages = get_flashed_messages() %}
-  {% if messages %}
-    <ul class=flashes>
-    {% for message in messages %}
-      <li>{{ message }}</li>
-    {% endfor %}
-    </ul>
-  {% endif %}
-{% endwith %}
-{% block body %}{% endblock %}
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+{# Loads some of the macros included with Flask-Bootstrap. We are using the
+   utils module here to automatically render Flask's flashed messages in a
+   bootstrap friendly manner #}
+{% import "bootstrap/utils.html" as utils %}
+
+  
+        {%- with messages = get_flashed_messages(with_categories=True) %}
+
+  {%- if messages %}
+    <div class="row">
+      <div class="col-md-12">
+        {{utils.flashed_messages(messages)}}
+      </div>
+    </div>
+  {%- endif %}
+  {%- endwith %}
 
 <head>
 </head>
@@ -18,15 +26,23 @@
 <body>
         
         <form action="/register" method="POST">
-          {{ form.csrf_token }} <br><br>
+          {{ form.csrf_token }} 
           <a>Username: </a>{{form.username}} <br><br>
           <a>Email: </a>{{form.email}} <br><br>
           <a>Password: </a>{{form.psw}} <br><br>
           <a>Repeat password: </a>{{form.repassword}}<br><br>
           <input type = "submit" value = "Submit"><br><br>
-<br>
           <p>Already have an account? <a href="/login">Sign in</a>.</p>
-
+          <p>Registering you are agreeding with ours <a href="/terms">terms and conditions</a>.</p>
 </body>
 
+<script>
+  document.onkeyup = function(e) {
+  if (e.which == 13) {
+    document.getElementById('selection').submit();
+  }
+};
+</script>
+
 </html>
+

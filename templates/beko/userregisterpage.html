@@ -4,15 +4,19 @@
 <head>
 	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"> 
+
+
+</head>
+
+<body>
 
 {# Loads some of the macros included with Flask-Bootstrap. We are using the
    utils module here to automatically render Flask's flashed messages in a
    bootstrap friendly manner #}
 {% import "bootstrap/utils.html" as utils %}
 
-</head>
-
-<body>
+  
         {%- with messages = get_flashed_messages(with_categories=True) %}
 
   {%- if messages %}
@@ -24,11 +28,13 @@
   {%- endif %}
   {%- endwith %}
 
+
+
 <div class="form">
         <form action="/pageregister" method="POST" style="padding-left:12px; padding-right:12px; padding-bottom: 12px;  ">
           {{ form.csrf_token }} <br><br>
-          <a>Page name: </a>{{form.pagename}} <br><br>
-          <input type = "submit" value = "Submit">
+          <a>Page name: </a><a id="black">{{form.pagename}}</a> <br><br>
+          <a id="black"><input type = "submit" value = "Submit"></a>
 </form>
 </div>
 
@@ -44,8 +50,9 @@
        color: white; 
       }
   body {
-    
-    
+  }
+  a#black {
+    color: black;
   }
 
 </style>

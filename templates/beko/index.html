@@ -12,7 +12,7 @@
 </head>
 <body style="background-color: rgb(21, 32, 43);" >
 
-
+{% extends 'beko/navbar.html' %}
 {% block styles -%}
 
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
@@ -161,6 +161,24 @@ p
 }
 
 </style>
+
+{% block content %}
+
+{# Loads some of the macros included with Flask-Bootstrap. We are using the
+   utils module here to automatically render Flask's flashed messages in a
+   bootstrap friendly manner #}
+{% import "bootstrap/utils.html" as utils %}
+
+{%- with messages = get_flashed_messages(with_categories=True) %}
+ {%- if messages %}
+    <div class="row">
+      <div class="col-md-12">
+        {{utils.flashed_messages(messages)}}
+      </div>
+    </div>
+  {%- endif %}
+  {%- endwith %}
+
 <!--
 <video style="z-index:-1;" src="{{url_for('static', filename='video/armadures.mp4')}}" autoplay="true" loop="true" width="100%" muted="true">
 </video>
@@ -198,5 +216,6 @@ p
     }
 }
 -->
+{% endblock %}
 </body>
 

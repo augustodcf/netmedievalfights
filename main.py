@@ -186,6 +186,9 @@ nav.init_app(app)
 def index():
     return render_template("beko/index.html")
 
+@app.route("/terms")
+def terms():
+    return render_template("beko/terms.html")
 
 @app.route("/page/<string:PageAddresi>", methods=["GET"])
 def route_page(PageAddresi):
@@ -230,14 +233,13 @@ def register():
             error.append("The email is invalid")
 
         if error:
-            flash("Error!")
             flash(', '.join(error))
             return redirect(url_for('register'))
         else:
             user = User(username=form.username.data, password=form.psw.data, email=form.email.data)
             db.session.add(user)
             db.session.commit()
-            return redirect(request.args.get("next") or url_for('index'))
+            return redirect(url_for('login'))
     return render_template('/beko/userregisterwtf.html', form=form)
 
 
@@ -265,6 +267,7 @@ def login():
             # if not is_safe_url(next):
             #    return abort(400)
 
+
             return 'Logged in successfully.'
         return "Login Failed!"
 
@@ -278,16 +281,17 @@ def login():
 @login_required
 def logout():
     logout_user()
-    return "You are now logged out."
+    return 'You are now logged out.'
 
 
 @app.route('/shareselection', methods=['GET', 'POST'])
 @login_required
 def shareselection():
    form = Selectuser()
-   haspage = User_has_page()
+
    error1 = None
    error2 = None
+   selected = []
    if form.validate_on_submit():
         # retrieve the selected page names from pageadm stored in the session cookie
         selected = session['checked']
@@ -310,6 +314,7 @@ def shareselection():
             if error1 == None:
                 # for each selected page, establish the share relationship with a given user
                 for pagename in selected:
+                    haspage = User_has_page()
                     user = User.query.filter_by(username=form.username.data).first()
                     page = Page.query.filter_by(nome=pagename).first()
                     haspage.page = page
@@ -322,7 +327,7 @@ def shareselection():
                     db.session.add(user)
                     db.session.add(page)
                     db.session.commit()
-                    flash("Page successfully shared! Congratulations!")
+                    flash("Page "+ pagename + " successfully shared! Congratulations!")
             else:
                 return redirect(url_for('pageadmo'))
         else:
@@ -348,8 +353,12 @@ def pageadmo():
         for check in request.form:
             checked.append(check.split('_')[1])
         session['checked'] = checked
+        if checked == []:
+            flash("You must select pages to share.")
+            return redirect(url_for('pageadmo'))
+        else:
+            return redirect(url_for('shareselection'))
 
-        return redirect(url_for('shareselection'))
 
     for page in current_user.pages:
         # if request.method == "POST":

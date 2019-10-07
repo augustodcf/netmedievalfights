@@ -43,6 +43,10 @@ function showConcill() {
 </head>
 <body>
 
+{% extends 'beko/navbar.html' %}
+
+
+{% block content %}
 <div class="container">
 	<h3>Page Control</h3>
  <ul class="list-inline">
@@ -59,13 +63,13 @@ function showConcill() {
 
 <div class="tab-content" > <!--style="display: none"-->
 	<div id="Owner" class="" style="width: 100%; height: 90%">
- 			 <iframe style="width: 100%; height: 90%;" src="http://localhost:5000/pageadmo">
+ 			 <iframe style="width: 100%; height: 90%;" src="/pageadmo">
  			 </iframe>
     </div>
 
 
     <div id="Editor" style="display: none; width: 100%; height: 90%" >
- 			 <iframe style="width: 100%; height: 90%" src="http://localhost:5000/pageadme"></iframe>
+ 			 <iframe style="width: 100%; height: 90%" src="/pageadme"></iframe>
     </div>
 	
 	
@@ -82,12 +86,13 @@ function showConcill() {
  			{% if thisUserPower == 1 %} 
  			 <a>Concill page</a>
  			{% else %}
- 			 <a>Nothing for you here</a>
+ 			 <a>Nothing for you here.</a>
  			{% endif %}	 
     </div>
     
 </div>
 
+{% endblock %}
 
 
 </body>
