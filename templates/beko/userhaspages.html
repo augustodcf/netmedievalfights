@@ -1,4 +1,52 @@
       
+<head>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+<script type="text/javascript">
+	function submitRevoke(){
+		document.getElementsByName("Radio_Revoke")[0].checked = true;
+		document.getElementsByName("Radio_Share")[0].checked = false;
+		document.getElementById('selection').submit();
+	};
+
+	function submitShare(){
+		document.getElementsByName("Radio_Share")[0].checked = true;
+		document.getElementsByName("Radio_Revoke")[0].checked = false;
+		document.getElementById('selection').submit();
+	};
+
+	function submit(){
+		document.getElementById('selection').submit();
+	};
+
+
+	function newpage(){
+		window.location.href ="/pageregister";
+	};
+
+	function selectall(){
+		itens = document.getElementsByClassName("marcar");
+		
+		numerofalse = 0;
+		i = 0
+		for (i=0; i<itens.length ; i++){numerofalse += itens[i].checked;}
+
+		if (numerofalse == itens.length)
+		{
+			for (i=0; i<itens.length ; i++){itens[i].checked = false;}
+		}
+		else
+		{
+			for (i=0; i<itens.length ; i++){itens[i].checked = true;}
+		}
+	};
+		
+
+
+</script>
+
+</head>
+
 {# Loads some of the macros included with Flask-Bootstrap. We are using the
    utils module here to automatically render Flask's flashed messages in a
    bootstrap friendly manner #}
@@ -23,7 +71,10 @@
 <form id="selection" action="/pageadmo"  method="POST" onsubmit="return false;">
 <table class="table table-striped table-dark">
 {% elif pagetype == 1 %}
-<form action="/pageadme"  method="POST">
+<form action="/pageadme"  method="POST" onsubmit="return false;">
+<table class="table table-striped table-dark">
+{% elif pagetype == 2 %}
+<form action="/userselection"  method="POST" onsubmit="return false;">
 <table class="table table-striped table-dark">
 {% endif %}
 	<thead>
@@ -38,35 +89,49 @@
 			<tr>
 				{% for column in table.headers %}
 				<td>
+				{% if pagetype == 1 or pagetype == 0 %}
 					{% if row[column] == "☑" %}
-						<input type = "checkbox" name = check_{{row['Name']}} valor = "selection">
+						<input type = "checkbox" name = check_{{row['Name']}} valor = "selection" class='marcar'>
 					{% else %}
 						{{row[column]}}
 					{% endif %}
+				{% elif pagetype == 2 %}
+					{% if row[column] == "☑" %}
+						<input type = "checkbox" name = check_{{row['Editor']}}_{{row['Page']}} valor = "selection" class='marcar'>
+					{% else %}
+						{{row[column]}}
+					{% endif %}
+				{% endif %}
 				</td>
 				{% endfor %}
 			</tr>
 		{% endfor %}
 	</tbody>
 </table>
+<button onclick="selectall()" class="btn btn-light" >Select all</button>
 {% if pagetype == 0 %}  
-<input type="submit" value="Share" onclick="submit()">
-<button onclick="newpage()" >New Page</button>
+
+<input type="submit" name='Share' value="Share" onclick="submitShare()" class="btn btn-light">
+<input type='submit' name='Revoke' value="Revoke" onclick="submitRevoke()" class="btn btn-light">
+<button onclick="newpage()" class='btn btn-primary' >New Page</button>
+
+
+
+<input type="radio" id="Share" name="Radio_Share" value="Share" style="visibility: hidden;">
+<input type="radio" id="Revoke"  name="Radio_Revoke" value="Revoke" style="visibility: hidden;">
+
+
+
 {% elif pagetype == 1 %}
-<input type="submit" value="Abdicate" onclick="submit()">
+<input type="submit" value="Abdicate" onclick="submit()" class="btn btn-light">
+
+{% elif pagetype == 2 %}
+<input type="submit" value="Revoke" onclick="submit()" class="btn btn-light">
+
 {% endif %}
 </form>
 
 
 
 
-<script type="text/javascript">
-	function submit(){
-		document.getElementById('selection').submit();
-	}
 
-	function newpage(){
-		window.location.href ="/pageregister";
-	}
-
-</script>

@@ -283,6 +283,52 @@ def logout():
     logout_user()
     return 'You are now logged out.'
 
+@app.route('/userselection', methods=['GET', 'POST'])
+@login_required
+def userselection():
+    table = {'headers': ['Select', 'Editor', 'Page'],
+             'contents': []
+             }
+    pagetype = 2
+    pagesnames = session['checked']
+
+
+
+    #for editor in pagesnames:
+    for pagename in pagesnames:
+        page = Page.query.filter_by(nome=pagename).first()
+        for haspage in User_has_page.query.filter_by(page=page, user_has_page_relationtype="e").all():
+            editor = haspage.user.username
+
+            dic = {'Select': "☑",
+                   'Editor': editor,
+                   'Page': page.nome ,
+                   }
+            table['contents'].append(dic)
+
+    if table['contents'] == []:
+        flash("No editor to revoke edition power.")
+
+    if request.method == "POST":
+        for check in request.form:
+            checkededitor = (check.split('_')[1])
+            checkedpage = (check.split('_')[2])
+            thispage = Page.query.filter_by(nome=checkedpage).first()
+            thisuser = User.query.filter_by(username=checkededitor).first()
+            haspage = User_has_page.query.filter_by(page=thispage,user=thisuser).first()
+            thisuser.pages.remove(haspage)
+            db.session.delete(haspage)
+            db.session.add(thispage)
+            db.session.add(thisuser)
+            db.session.commit()
+            flash("Editor power on " + checkededitor + " page successfully repealed.")
+
+        return redirect(url_for('pageadmo'))
+
+
+    return render_template('beko/userhaspages.html', pagetype = pagetype, table=table)
+
+
 
 @app.route('/shareselection', methods=['GET', 'POST'])
 @login_required
@@ -305,8 +351,8 @@ def shareselection():
                 error1 = ""
 
         # verifying if the user exists
-        user = User.query.filter_by(username=form.username.data).first()
-        if user == None:
+        searchuser = User.query.filter_by(username=form.username.data).first()
+        if searchuser == None:
             flash("User name "+form.username.data+" not found.")
             error2 = ""
 
@@ -349,15 +395,25 @@ def pageadmo():
     pagetype = 0
 
 
+
     if request.method == "POST":
         for check in request.form:
             checked.append(check.split('_')[1])
-        session['checked'] = checked
-        if checked == []:
-            flash("You must select pages to share.")
+
+
+
+        if checked == [("Revoke")] or checked == [('Share')]:
+            flash("You must select pages first.")
             return redirect(url_for('pageadmo'))
         else:
-            return redirect(url_for('shareselection'))
+            if ("Revoke") in checked:
+                checked.remove("Revoke")
+                session['checked'] = checked
+                return redirect(url_for('userselection'))
+            elif ("Share"):
+                checked.remove("Share")
+                session['checked'] = checked
+                return redirect(url_for('shareselection'))
 
 
     for page in current_user.pages:
@@ -366,11 +422,11 @@ def pageadmo():
         #        continue
         #    else :
         #        pass
-
+        editors = []
         # passing parameters if owner
         if page.user_has_page_relationtype == "o":
             select = "☑"
-            editors = []
+
             for has_page in User_has_page.query.filter_by(user_has_page_relationtype="e").all():
                 if has_page.user != current_user:
                     if page.page == has_page.page:
@@ -402,11 +458,17 @@ def pageadme():
 
     if request.method == "POST":
         for check in request.form:
-            checked.append(check.split('_')[1])
+            #checked.append(check.split('_')[1])
+            thispage = Page.query.filter_by(nome=(check.split('_')[1])).first()
+            haspage = User_has_page.query.filter_by(page=thispage,user=current_user).first()
+            #for haspage in haspages:
+                #if haspage.user == current_user:
+            current_user.pages.remove(haspage)
+            db.session.delete(haspage)
+            db.session.add(thispage)
+            db.session.add(current_user)
+            db.session.commit()
             flash("Editor power on " + check.split('_')[1] + " page successfully abdicated.")
-        session['checked'] = checked
-
-
 
         return redirect(url_for('pageadme'))
 
