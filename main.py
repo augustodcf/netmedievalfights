@@ -66,13 +66,28 @@ def load_user(user_id):
     return user
 
 
+
 class Page(db.Model):
     idpage = db.Column(db.Integer, primary_key=True, autoincrement=True)
     nome = db.Column(db.String(45), unique=True, nullable=False)
     icone = db.Column(db.String(45), unique=True, nullable=True)
     header = db.Column(db.String(45), unique=False, nullable=True)
     background = db.Column(db.String(45), unique=False, nullable=True)
+    status = db.Column(db.Integer(), unique=False, nullable=True)
+    pagetypeid = db.Column(db.Integer(), unique=False, nullable=True)
     users = db.relationship('User_has_page', back_populates='page')
+
+
+
+    def fetchPageTypeObject(self):
+        tempObject = None
+        if self.pagetypeid is None:
+            tempObject = None
+        elif self.pagetypeid < 3:
+            tempObject = pageTypeDict[self.pagetypeid](page_idpage=self.idpage).first()
+        else:
+            tempObject = pageTypeDict[self.pagetypeid](page_idpage=self.idpage, type=self.pagetypeid-3).first()
+        return tempObject
 
     # User_idUser = db.Column(db.Integer, db.ForeignKey('User.idUser'),
     # nullable=False)
@@ -82,17 +97,50 @@ class Page(db.Model):
 
 class Fighter(db.Model):
     idfighter = db.Column(db.Integer, primary_key=True)
-    fighterName = db.Column(db.String(255), unique=True, nullable=False)
-    fighterAge = db.Column(db.Integer(), unique=False, nullable=False)
-    fighterWeight = db.Column(db.Integer(), unique=False, nullable=False)
-    fighterHeight = db.Column(db.Integer(), unique=False, nullable=False)
-    fighterMainHand = db.Column(db.String(1), unique=False, nullable=False)
-    fighterEmail = db.Column(db.String(255), unique=False, nullable=False)
+    fighterName = db.Column(db.String(255), unique=True, nullable=True)
+    fighterAge = db.Column(db.Integer(), unique=False, nullable=True)
+    fighterWeight = db.Column(db.Integer(), unique=False, nullable=True)
+    fighterHeight = db.Column(db.Float(), unique=False, nullable=True)
+    fighterMainHand = db.Column(db.String(1), unique=False, nullable=True)
+    fighterEmail = db.Column(db.String(255), unique=False, nullable=True)
     fighterGif = db.Column(db.String(45), unique=True, nullable=True)
     fighterSex = db.Column(db.String(1), unique=False, nullable=True)
+    fighterNacionality = db.Column(db.Integer(), unique=False, nullable=True)
+    page_idpage = db.Column(db.Integer(), unique=True, nullable=False)
 
     def __repr__(self):
         return '<User %r>' % self.username
+
+class Group(db.Model):
+    idgroup = db.Column(db.Integer, primary_key=True)
+    page_idpage = db.Column(db.Integer(), unique=True, nullable=False)
+    type = db.Column(db.Integer,unique=False, nullable=True)
+    groupName = db.Column(db.String(45), unique=True, nullable=True)
+    groupLogo = db.Column(db.String(45), unique=True, nullable=True)
+    groupEmail = db.Column(db.String(45), unique=True, nullable=True)
+    groupcol = db.Column(db.String(45), unique=True, nullable=True)
+
+class Group_has_fighter(db.Model):
+    group_idgroup = db.Column(db.Integer(), primary_key=True, nullable=False)
+    group_page_idpage = db.Column(db.Integer(), unique=True, nullable=False)
+    fighter_idfighter = db.Column(db.Integer(), unique=True, nullable=False)
+    fighter_page_idpage = db.Column(db.Integer(), unique=True, nullable=False)
+    relationtype = db.Column(db.Integer(), unique=False, nullable=True)
+
+class Event(db.Model):
+    idevent = db.Column(db.Integer(), primary_key=True, nullable=False)
+    page_idpage = db.Column(db.Integer(), unique=True, nullable=False)
+    organizationName = db.Column(db.String(45), unique=False, nullable=True)
+    organizationLogo = db.Column(db.String(45), unique=False, nullable=True)
+    tournamentName = db.Column(db.String(45), unique=False, nullable=True)
+    eventPage = db.Column(db.String(45), unique=False, nullable=True)
+    eventLocation = db.Column(db.String(45), unique=False, nullable=True)
+
+class Other(db.Model):
+    idother = db.Column(db.Integer(), primary_key=True, nullable=False)
+    page_idpage = db.Column(db.Integer(), unique=True, nullable=False)
+    icon = db.Column(db.String(45), unique=False, nullable=True)
+    content = db.Column(db.String(45), unique=False, nullable=True)
 
 
 class MyForm(FlaskForm):
@@ -111,6 +159,15 @@ class Addpage(FlaskForm):
 class Selectuser(FlaskForm):
     username = StringField('username',validators=[DataRequired()])
     Submit: SubmitField = SubmitField('Submit')
+
+pageTypeDict = {
+        None: None,
+        0: Fighter.query.filter_by,
+        1: Event.query.filter_by,
+        2: Other.query.filter_by,
+        3: Group.query.filter_by,
+        4: Group.query.filter_by,
+    }
 
 def frontend_top():
     tempNav = Navbar(title="Medieval Fights")
@@ -190,24 +247,166 @@ def index():
 def terms():
     return render_template("beko/terms.html")
 
-@app.route("/page/<string:PageAddresi>", methods=["GET"])
+@app.route("/page/<string:PageAddresi>", methods=["GET", "POST"])
 def route_page(PageAddresi):
+    thispagehastype = False
+
+    page = Page.query.filter_by(nome=PageAddresi).first()
+    user = User.query.filter_by(idUser=str(current_user).strip('<>').replace('User ','')).first()
+
+
+    fighter = Fighter.query.filter_by(page_idpage=page.idpage).first()
+    event = Event.query.filter_by(page_idpage=page.idpage).first()
+    other = Other.query.filter_by(page_idpage=page.idpage).first()
+    club = Group.query.filter_by(page_idpage=page.idpage, type=0).first()
+    team = Group.query.filter_by(page_idpage=page.idpage, type=1).first()
+
+    if fighter or event or other or club or team:
+        thispagehastype = True
+
+
+    if request.method == "POST":
+        # defining the page type
+        if User_has_page.query.filter_by(user_id=user.idUser, page_idpage=page.idpage, user_has_page_relationtype= 'o') is not None:
+            if thispagehastype == False:
+                if 'fighter' == request.form["name"]:
+                    newfighter = Fighter()
+                    newfighter.page_idpage = page.idpage
+                    page.pagetypeid = 0
+                    db.session.add(page)
+                    db.session.add(newfighter)
+                    db.session.commit()
+                    return 'Behold! A new fighter has born!'
+                if 'club' == request.form["name"]:
+                    newclub = Group()
+                    newclub.page_idpage = page.idpage
+                    newclub.type = 0
+                    page.pagetypeid = 4
+                    db.session.add(page)
+                    db.session.add(newclub)
+                    db.session.commit()
+                    return 'Behold! A new club has born!'
+                if 'team' == request.form["name"]:
+                    newteam = Group()
+                    newteam.page_idpage = page.idpage
+                    newteam.type = None
+                    page.pagetypeid = 3
+                    db.session.add(page)
+                    db.session.add(newteam)
+                    db.session.commit()
+                    return 'Behold! A new team has born!'
+                if 'event' == request.form["name"]:
+                    newevent = Event()
+                    newevent.page_idpage = page.idpage
+                    page.pagetypeid = 1
+                    db.session.add(page)
+                    db.session.add(newevent)
+                    db.session.commit()
+                    return 'Behold! A new event has born!'
+                if 'other' == request.form["name"]:
+                    newother = Other()
+                    newother.page_idpage = page.idpage
+                    page.pagetypeid = 2
+                    db.session.add(page)
+                    db.session.add(newother)
+                    db.session.commit()
+                    return 'Behold! A new other has born!'
+            else:
+                print(request.form)
+
+                if 'name' in request.form:
+                    fighter.fighterName = request.form['name']
+                    db.session.add(fighter)
+                    db.session.commit()
+
+                if 'email' in request.form:
+                    fighter.fighterEmail = request.form['email']
+                    db.session.add(fighter)
+                    db.session.commit()
+
+                if 'gif' in request.form:
+                    fighter.fighterGif = request.form['gif']
+                    db.session.add(fighter)
+                    db.session.commit()
+
+                if 'wieght' in request.form:
+                    fighter.fighterWeight = request.form['wieght']
+                    db.session.add(fighter)
+                    db.session.commit()
+
+                if 'age' in request.form:
+                    fighter.fighterAge = request.form['age']
+                    db.session.add(fighter)
+                    db.session.commit()
+
+                    #height = fighter.fighterWeight,
+                    #mainhand = fighter.fighterMainHand,
+                    #nacionality = fighter.fighterNacionality,
+                    #name = fighter.fighterName,
+                    #sex = fighter.fighterSex,
+                    #background = page.background,
+                    #header = page.header,
+                    #icone = page.icone,
+
+                return redirect('/page/'+PageAddresi)
+
+        if User_has_page.query.filter_by(user_id=user.idUser, page_idpage=page.idpage) is not None:
+
+            #definig page content
+            typeObject = page.fetchPageTypeObject()
+
+            print(type(typeObject))
+            #if fighter:
+            #    return redirect(url_for('route_page(PageAddresi)'))
+            #elif event:
+            #    return redirect(url_for('route_page'), page=PageAddresi)
+            #elif other:
+            #    return redirect(url_for('route_page'), page=PageAddresi)
+            #elif club:
+            #    return redirect(url_for('route_page'), page=PageAddresi)
+            #elif team:
+            #    return redirect(url_for('route_page'), page=PageAddresi)
     if request.method == "GET":
-        # q = Page.query.all()
-        # i = 0
-        # strings = ["tornadoferreira", "stevejobs"]
-        # for page in q:
-        #    print(page)
-        #    page.PageAddres = strings[i]
-        #    i+=1
-        #    db.session.add(page)
-        #    db.session.commit()
-        page = Page.query.filter_by(nome=PageAddresi).all()
-        print(PageAddresi)
-        if page:
-            return render_template("beko/fighter.html")
+        if page is not None:
+            # definig page content
+
+            #typeObject = page.fetchPageTypeObject()
+            #print(type(typeObject))
+
+
+            if fighter:
+
+                return render_template("beko/page/fighter.html", page=PageAddresi,
+                                                                age=fighter.fighterAge,
+                                                                email=fighter.fighterEmail,
+                                                                gif=fighter.fighterGif,
+                                                                weight=fighter.fighterWeight,
+                                                                height=fighter.fighterWeight,
+                                                                mainhand=fighter.fighterMainHand,
+                                                                nacionality=fighter.fighterNacionality,
+                                                                name=fighter.fighterName,
+                                                                sex=fighter.fighterSex,
+                                                                background=page.background,
+                                                                header=page.header,
+                                                                icone=page.icone,
+                                                                relation=user,
+
+
+
+                                       )
+            elif event:
+                return render_template("beko/page/event.html", page=PageAddresi)
+            elif other:
+                return render_template("beko/page/other.html", page=PageAddresi)
+            elif club:
+                return render_template("beko/page/club.html", page=PageAddresi)
+            elif team:
+                return render_template("beko/page/team.html", page=PageAddresi)
+            else:
+                flash('Select the page type at your page control panel')
+                return render_template("beko/newpage.html", page=PageAddresi)
         else:
-            return "", 401
+            return "This page doesn't exist."
 
 
 @app.route("/testelog")
@@ -268,7 +467,7 @@ def login():
             #    return abort(400)
 
 
-            return 'Logged in successfully.'
+            return "Logged in successfully."
         return "Login Failed!"
 
     # user = User(UserName="arbusto", Password="werwer", Email="jenkins@leroy.com")
@@ -321,7 +520,7 @@ def userselection():
             db.session.add(thispage)
             db.session.add(thisuser)
             db.session.commit()
-            flash("Editor power on " + checkededitor + " page successfully repealed.")
+            flash(checkededitor +" editor power on " + thispage.nome +" page successfully repealed.")
 
         return redirect(url_for('pageadmo'))
 
@@ -388,7 +587,7 @@ def shareselection():
 @app.route("/pageadmo", methods=['GET', 'POST'])
 @login_required
 def pageadmo():
-    table = {'headers': ['Select', 'Name', 'Editors'],
+    table = {'headers': ['Select', 'Name', 'Editors', 'Status', 'Type'],
              'contents': []
              }
     checked = []
@@ -410,11 +609,41 @@ def pageadmo():
                 checked.remove("Revoke")
                 session['checked'] = checked
                 return redirect(url_for('userselection'))
-            elif ("Share"):
+            elif ("Share") in checked:
                 checked.remove("Share")
                 session['checked'] = checked
                 return redirect(url_for('shareselection'))
+            elif ("Delete") in checked:
+                checked.remove("Delete")
+                for check in checked:
+                    page = Page.query.filter_by(nome=check).first()
+                    # checking the page type and deleting content
+                    fighter = Fighter.query.filter_by(page_idpage=page.idpage).first()
+                    event = Event.query.filter_by(page_idpage=page.idpage).first()
+                    other = Other.query.filter_by(page_idpage=page.idpage).first()
+                    club = Group.query.filter_by(page_idpage=page.idpage).first()
+                    if fighter is not None:
+                        db.session.delete(fighter)
+                    if event is not None:
+                        db.session.delete(event)
+                    if other is not None:
+                        db.session.delete(other)
+                    if club is not None:
+                        db.session.delete(club)
 
+                    flash("Page "+check+" deleted.")
+                    # deleting relations
+                    haspages = page.users
+                    for objhaspage in haspages:
+                        user = objhaspage.user
+                        user.pages.remove(objhaspage)
+                        page.users.remove(objhaspage)
+                        db.session.delete(objhaspage)
+                        db.session.add(user)
+                    # finaly deleting page
+                    db.session.delete(page)
+                db.session.commit()
+                return redirect(url_for('pageadmo'))
 
     for page in current_user.pages:
         # if request.method == "POST":
@@ -435,13 +664,36 @@ def pageadmo():
         else:
             select = ""
 
+        if page.page.status == 1:
+            status = "Published"
+        elif page.page.status == None:
+            status = "Unpublished"
+        elif page.page.status == 0:
+            status = "Waiting aproval"
 
         editors = ", ".join(editors)
+
+        if Fighter.query.filter_by(page_idpage=page.page.idpage).first() is not None:
+            thistype = 'Fighter'
+        elif Group.query.filter_by(page_idpage=page.page.idpage).first() is not None:
+            thisgroup = Group.query.filter_by(page_idpage=page.page.idpage).first()
+            if thisgroup.type == None:
+                thistype = 'Team'
+            else:
+                thistype = 'Club'
+        elif Event.query.filter_by(page_idpage=page.page.idpage).first() is not None:
+            thistype = 'Event'
+        elif Other.query.filter_by(page_idpage=page.page.idpage).first() is not None:
+            thistype = 'Other'
+        else:
+            thistype = '﹃' #this symbol will construct a drop list with page options on template
 
         if page.user_has_page_relationtype == "o":
             dic = {'Select': select,
                    'Name': page.page.nome,
                    'Editors': editors,
+                   'Status': status,
+                   'Type': thistype
                    }
             table['contents'].append(dic)
 
@@ -450,7 +702,7 @@ def pageadmo():
 @app.route("/pageadme", methods=['GET', 'POST'])
 @login_required
 def pageadme():
-    table = {'headers': ['Select', 'Name'],
+    table = {'headers': ['Select', 'Name', 'Status'],
              'contents': []
              }
     checked = []
@@ -484,9 +736,18 @@ def pageadme():
         else:
             select = ""
 
+
+        if page.page.status == 1:
+            status = "Published"
+        elif page.page.status == None:
+            status = "Unpublished"
+        elif page.page.status == 0:
+            status = "Waiting aproval"
+
         if page.user_has_page_relationtype == "e":
             dic = {'Select': select,
                    'Name': page.page.nome,
+                   'Status': status,
 
                    }
             table['contents'].append(dic)
@@ -525,45 +786,54 @@ def pagecontrol():
     thisUserPower = current_user.power
     return render_template('/beko/pagecontrol.html', thisUserPower=thisUserPower)
 
-# def iniciarbanco():
-# user1 = User(UserName="arbusto", Password="werwer", Email="jenkins@leroy.com")
-# db.session.add(user1)
+def iniciarbanco():
+    #db.drop_all()
+    #db.create_all()
 
-# user2 = User(UserName="tony", Password="123123", Email="jenkins@leroytcs.com")
-# db.session.add(user2)
+    user1 = User(username="arbusto", password="werwer", email="jenkins@leroy.com")
+    db.session.add(user1)
 
-# fighter = Fighter(
-# FighterName        = "Tornado Ferreira",
-# FighterAge         = 1988,
-# FighterWeight      = 90,
-# FighterHeight      = 175,
-# FighterMainHand    = "R",
-# FighterEmail       = "johnbiritones@gmail.com",
-# FighterGif         = None,
-# FighterSex         = "M",
-# )
-# db.session.add(fighter)
+    user2 = User(username="tony", password="123123", email="jenkins@leroytcs.com")
+    db.session.add(user2)
 
-# page = Page(
-# PageAddres     = "tferreira",
-# PagePhoto      = None,
-# PageHeader     = None,
-# PageBackground = None,
-# )
-# db.session.add(page)
+    fighter = Fighter(
+    fighterName        = "Tornado Ferreira",
+    fighterAge         = 1988,
+    fighterWeight      = 90,
+    fighterHeight      = 175,
+    fighterMainHand    = "R",
+    fighterEmail       = "johnbiritones@gmail.com",
+    fighterGif         = None,
+    fighterSex         = "M",
+    )
+    db.session.add(fighter)
 
-# user_page = User_has_page (
-# User_idUser            = 1,
-# Page_idPage            = page.idPage,
-# Page_User_idUser       = None,
-# Page_Club_idClub       = None,
-# Page_Fighter_idFighter = fighter.idFighter,
-# user_has_PageRelation  = "C",
-# )
-# db.session.add(user_page)
+    page = Page(
+    nome     = "tferreira",
+    header      = None,
+    icone     = None,
+    pagetypeid = 0,
+    status = None,
 
-# db.session.commit()
+    )
+    db.session.add(page)
 
-# iniciarbanco()
+    user_page = User_has_page (
+    user_id            = user1.idUser,
+    page_idpage            = page.idpage,
+    user_has_PageRelation  = "o",
+    )
+
+    user_page = User_has_page(
+        user_id = user2.idUser,
+        page_idpage=page.idpage,
+        user_has_PageRelation="e",
+    )
+
+    db.session.add(user_page)
+
+    db.session.commit()
+
+#iniciarbanco()
 
 app.run(debug=True, host='0.0.0.0')

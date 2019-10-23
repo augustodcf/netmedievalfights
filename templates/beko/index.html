@@ -2,15 +2,7 @@
 
 
 
-<head>
 
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
-
-
-
-</head>
-<body style="background-color: rgb(21, 32, 43);" >
 
 {% extends 'beko/navbar.html' %}
 {% block styles -%}
@@ -22,9 +14,7 @@
 
 {% endblock %}
 
-{% block navbar %}
-{{nav.frontend_top.render()}}
-{% endblock %}
+
 
 <style>
  .jumbotron {
@@ -163,6 +153,16 @@ p
 </style>
 
 {% block content %}
+
+<!--script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script-->
+
+
+
+
+<body style="background-color: rgb(21, 32, 43);" >
+
 
 {# Loads some of the macros included with Flask-Bootstrap. We are using the
    utils module here to automatically render Flask's flashed messages in a

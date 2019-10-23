@@ -6,14 +6,24 @@
 	function submitRevoke(){
 		document.getElementsByName("Radio_Revoke")[0].checked = true;
 		document.getElementsByName("Radio_Share")[0].checked = false;
+		document.getElementsByName("Radio_Delete")[0].checked = false;
 		document.getElementById('selection').submit();
 	};
 
 	function submitShare(){
 		document.getElementsByName("Radio_Share")[0].checked = true;
 		document.getElementsByName("Radio_Revoke")[0].checked = false;
+		document.getElementsByName("Radio_Delete")[0].checked = false;
 		document.getElementById('selection').submit();
 	};
+
+	function submitDelete(){
+		document.getElementsByName("Radio_Share")[0].checked = false;
+		document.getElementsByName("Radio_Revoke")[0].checked = false;
+		document.getElementsByName("Radio_Delete")[0].checked = true;
+		document.getElementById('selection').submit();
+	};
+
 
 	function submit(){
 		document.getElementById('selection').submit();
@@ -22,6 +32,23 @@
 
 	function newpage(){
 		window.location.href ="/pageregister";
+	};
+
+	function submitButton(element){
+		
+		page = element.id
+		name = element.name
+		   //alert(id+ " " +name);
+
+		elementdata = {name: element.name}
+
+		   $.post("/page/"+page, elementdata)
+		  
+		
+		   document.getElementById("pagetypeselecion"+page).innerHTML = "NEW "+name;
+ 		
+
+ 		
 	};
 
 	function selectall(){
@@ -91,7 +118,18 @@
 				<td>
 				{% if pagetype == 1 or pagetype == 0 %}
 					{% if row[column] == "☑" %}
-						<input type = "checkbox" name = check_{{row['Name']}} valor = "selection" class='marcar'>
+						<input type = "checkbox" name = check_{{row['Name']}} valor = "selection" class='marcar' style="width: 20px; 
+            height: 20px;">
+					{% elif row[column] == "﹃" %}
+						<div id="pagetypeselecion{{row['Name']}}">
+						<button class="btn btn-light btn-sm" onclick="submitButton(this)" id={{row['Name']}} name="fighter">Fighter</button>	
+						<button class="btn btn-light btn-sm" onclick="submitButton(this)" id={{row['Name']}} name="team">Team</button>
+						<button class="btn btn-light btn-sm" onclick="submitButton(this)" id={{row['Name']}} name="club">Club</button>			
+						<button class="btn btn-light btn-sm" onclick="submitButton(this)" id={{row['Name']}} name="event">Event</button>
+						<button class="btn btn-light btn-sm" onclick="submitButton(this)" id={{row['Name']}} name="other">Other</button>
+						</div>
+					{% elif column == 'Name' %}
+						<a href="page/{{row['Name']}}" style='color: white' target="_blank">{{row['Name']}}</a>
 					{% else %}
 						{{row[column]}}
 					{% endif %}
@@ -119,7 +157,10 @@
 
 <input type="radio" id="Share" name="Radio_Share" value="Share" style="visibility: hidden;">
 <input type="radio" id="Revoke"  name="Radio_Revoke" value="Revoke" style="visibility: hidden;">
+<input type="radio" id="Delete"  name="Radio_Delete" value="Delete" style="visibility: hidden;">
 
+
+<button data-target="#exampleModalCenter" onclick="submitDelete()" class="btn btn-danger" style="position:absolute; right: 0 ">Delete</button>
 
 
 {% elif pagetype == 1 %}
