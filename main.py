@@ -12,9 +12,12 @@ from flask_debug import Debug
 from flask_bootstrap import Bootstrap
 from flask_nav import Nav
 from flask_nav.elements import Navbar, View, Subgroup, Separator, Text
-
+import os
 
 app = Flask(__name__)
+app.config['UPLOAD_FOLDER'] = os.path.abspath(os.curdir)+os.sep+"static/page"
+if not os.path.exists(app.config['UPLOAD_FOLDER']):
+    os.mkdir(app.config['UPLOAD_FOLDER'])
 
 Bootstrap(app)
 Debug(app)
@@ -99,13 +102,13 @@ class Fighter(db.Model):
     idfighter = db.Column(db.Integer, primary_key=True)
     fighterName = db.Column(db.String(255), unique=True, nullable=True)
     fighterAge = db.Column(db.Integer(), unique=False, nullable=True)
-    fighterWeight = db.Column(db.Integer(), unique=False, nullable=True)
+    fighterWeight = db.Column(db.Float(), unique=False, nullable=True)
     fighterHeight = db.Column(db.Float(), unique=False, nullable=True)
     fighterMainHand = db.Column(db.String(1), unique=False, nullable=True)
     fighterEmail = db.Column(db.String(255), unique=False, nullable=True)
     fighterGif = db.Column(db.String(45), unique=True, nullable=True)
     fighterSex = db.Column(db.String(1), unique=False, nullable=True)
-    fighterNacionality = db.Column(db.Integer(), unique=False, nullable=True)
+    fighterNacionality = db.Column(db.String(30), unique=False, nullable=True)
     page_idpage = db.Column(db.Integer(), unique=True, nullable=False)
 
     def __repr__(self):
@@ -126,6 +129,8 @@ class Group_has_fighter(db.Model):
     fighter_idfighter = db.Column(db.Integer(), unique=True, nullable=False)
     fighter_page_idpage = db.Column(db.Integer(), unique=True, nullable=False)
     relationtype = db.Column(db.Integer(), unique=False, nullable=True)
+    group_has_fighter_entrance = db.Column(db.Date(), unique=False, nullable=True)
+    group_has_fightercol_exit = db.Column(db.Date(), unique=False, nullable=True)
 
 class Event(db.Model):
     idevent = db.Column(db.Integer(), primary_key=True, nullable=False)
@@ -247,6 +252,7 @@ def index():
 def terms():
     return render_template("beko/terms.html")
 
+
 @app.route("/page/<string:PageAddresi>", methods=["GET", "POST"])
 def route_page(PageAddresi):
     thispagehastype = False
@@ -259,7 +265,7 @@ def route_page(PageAddresi):
     event = Event.query.filter_by(page_idpage=page.idpage).first()
     other = Other.query.filter_by(page_idpage=page.idpage).first()
     club = Group.query.filter_by(page_idpage=page.idpage, type=0).first()
-    team = Group.query.filter_by(page_idpage=page.idpage, type=1).first()
+    team = Group.query.filter_by(page_idpage=page.idpage, type=None).first()
 
     if fighter or event or other or club or team:
         thispagehastype = True
@@ -312,41 +318,99 @@ def route_page(PageAddresi):
                     db.session.commit()
                     return 'Behold! A new other has born!'
             else:
-                print(request.form)
 
-                if 'name' in request.form:
-                    fighter.fighterName = request.form['name']
-                    db.session.add(fighter)
-                    db.session.commit()
+                if fighter:
 
-                if 'email' in request.form:
-                    fighter.fighterEmail = request.form['email']
-                    db.session.add(fighter)
-                    db.session.commit()
+                    if 'name' in request.form:
+                        fighter.fighterName = request.form['name']
+                        db.session.add(fighter)
+                        db.session.commit()
 
-                if 'gif' in request.form:
-                    fighter.fighterGif = request.form['gif']
-                    db.session.add(fighter)
-                    db.session.commit()
+                    if 'email' in request.form:
+                        fighter.fighterEmail = request.form['email']
+                        db.session.add(fighter)
+                        db.session.commit()
 
-                if 'wieght' in request.form:
-                    fighter.fighterWeight = request.form['wieght']
-                    db.session.add(fighter)
-                    db.session.commit()
+                    if 'gif' in request.files:
+                        file = request.files['gif']
+                        file.filename = fighter.fighterName + "_" + fighter.fighterNacionality + file.filename[-4::]
+                        file.save(os.path.join(app.config["UPLOAD_FOLDER"], file.filename))
+                        fighter.fighterGif = file.filename
+                        db.session.add(fighter)
+                        db.session.commit()
 
-                if 'age' in request.form:
-                    fighter.fighterAge = request.form['age']
-                    db.session.add(fighter)
-                    db.session.commit()
+                    if 'Height' in request.form:
+                        if request.form['Height'] != "":
+                            if request.form['cm'] == 'inch':
+                                heightcm = float(request.form['Height'])
+                                heightcm = heightcm * 2.54
+                                fighter.fighterHeight = heightcm
+                            else:
+                                fighter.fighterHeight = request.form['Height']
+                            db.session.add(fighter)
+                            db.session.commit()
 
-                    #height = fighter.fighterWeight,
-                    #mainhand = fighter.fighterMainHand,
-                    #nacionality = fighter.fighterNacionality,
-                    #name = fighter.fighterName,
-                    #sex = fighter.fighterSex,
-                    #background = page.background,
-                    #header = page.header,
-                    #icone = page.icone,
+                    if 'weight' in request.form:
+                        if request.form['weight'] != "":
+                            if request.form['kg'] == 'pound':
+                                weightkg = float(request.form['weight'])
+                                weightkg = weightkg*0.453592
+                                fighter.fighterWeight = weightkg
+                            else:
+                                fighter.fighterWeight = request.form['weight']
+                            db.session.add(fighter)
+                            db.session.commit()
+
+                    if 'age' in request.form:
+                        if request.form['age'] != "":
+                            fighter.fighterAge = request.form['age']
+                            db.session.add(fighter)
+                            db.session.commit()
+
+                    if 'mainhand' in request.form:
+                         fighter.fighterMainHand = request.form['mainhand']
+                         db.session.add(fighter)
+                         db.session.commit()
+
+                    if 'nacionality' in request.form:
+                         fighter.fighterNacionality = request.form['nacionality']
+                         db.session.add(fighter)
+                         db.session.commit()
+
+                    if 'name' in request.form:
+                         fighter.fighterName = request.form['name']
+                         db.session.add(fighter)
+                         db.session.commit()
+
+                    if 'sex' in request.form:
+                         fighter.fighterSex = request.form['sex']
+                         db.session.add(fighter)
+                         db.session.commit()
+
+                    if 'background' in request.files:
+                        file = request.files['background']
+                        file.filename = fighter.fighterName + "_" + fighter.fighterNacionality + "_background" + file.filename[-4::]
+                        file.save(os.path.join(app.config["UPLOAD_FOLDER"], file.filename))
+                        page.background = file.filename
+                        db.session.add(page)
+                        db.session.commit()
+
+
+                    if 'header' in request.files:
+                        file = request.files['header']
+                        file.filename = fighter.fighterName + "_" + fighter.fighterNacionality + "_header"+ file.filename[-4::]
+                        file.save(os.path.join(app.config["UPLOAD_FOLDER"], file.filename))
+                        page.header = file.filename
+                        db.session.add(page)
+                        db.session.commit()
+
+
+                    if 'icone' in request.form:
+                         page.icone = request.form['icone']
+                         db.session.add(page)
+                         db.session.commit()
+
+                    return redirect('/page/' + PageAddresi)
 
                 return redirect('/page/'+PageAddresi)
 
@@ -375,13 +439,35 @@ def route_page(PageAddresi):
 
 
             if fighter:
+                teamshas = Group_has_fighter.query.filter_by(fighter_idfighter=fighter.idfighter,relationtype=None).all()
+                clubshas = Group_has_fighter.query.filter_by(fighter_idfighter=fighter.idfighter,relationtype=0).all()
+                tableteams = {'headers': ['Select', 'Name', 'Editors', 'Status', 'Type'],
+                         'contents': []
+                         }
+                tableclubs = {'headers': ['Select', 'Name', 'Editors', 'Status', 'Type'],
+                              'contents': []
+                              }
+                actualteam = None
+                actualteamlogo = None
+                actualteamname = None
+                for teamhas in teamshas:
+                    if teamhas.group_has_fighter_entrance == None:
+                        actualteamhas = teamhas
+                        teamshas = teamshas - teamhas
+                        actualteam = Group.query.filter_by(idgroup=actualteamhas.group_idgroup)
+                        actualteamlogo = actualteam.groupLogo
+                        actualteamname = actualteam.groupName
+                    Group.query.filter_by(idgroup=teamhas.group_idgroup)
+
+
+                print(actualteam)
 
                 return render_template("beko/page/fighter.html", page=PageAddresi,
                                                                 age=fighter.fighterAge,
                                                                 email=fighter.fighterEmail,
                                                                 gif=fighter.fighterGif,
                                                                 weight=fighter.fighterWeight,
-                                                                height=fighter.fighterWeight,
+                                                                height=fighter.fighterHeight,
                                                                 mainhand=fighter.fighterMainHand,
                                                                 nacionality=fighter.fighterNacionality,
                                                                 name=fighter.fighterName,
@@ -390,6 +476,8 @@ def route_page(PageAddresi):
                                                                 header=page.header,
                                                                 icone=page.icone,
                                                                 relation=user,
+                                                                actualteamlogo=actualteamlogo,
+                                                                actualteamname=actualteamname,
 
 
 
@@ -401,7 +489,9 @@ def route_page(PageAddresi):
             elif club:
                 return render_template("beko/page/club.html", page=PageAddresi)
             elif team:
-                return render_template("beko/page/team.html", page=PageAddresi)
+                return render_template("beko/page/team.html", page=PageAddresi,
+                                                                relation = user,
+                                       )
             else:
                 flash('Select the page type at your page control panel')
                 return render_template("beko/newpage.html", page=PageAddresi)
