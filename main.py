@@ -6,7 +6,7 @@ from controllers import blueprint
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, login_user, current_user, login_required, logout_user
 from flask_wtf import FlaskForm, Form
-from wtforms import StringField, SubmitField, SelectFieldBase, PasswordField
+from wtforms import StringField, SubmitField, SelectFieldBase, PasswordField, DateField
 from wtforms.validators import DataRequired
 from flask_debug import Debug
 from flask_bootstrap import Bootstrap
@@ -106,7 +106,7 @@ class Fighter(db.Model):
     fighterHeight = db.Column(db.Float(), unique=False, nullable=True)
     fighterMainHand = db.Column(db.String(1), unique=False, nullable=True)
     fighterEmail = db.Column(db.String(255), unique=False, nullable=True)
-    fighterGif = db.Column(db.String(45), unique=True, nullable=True)
+    fighterGif = db.Column(db.String(255), unique=True, nullable=True)
     fighterSex = db.Column(db.String(1), unique=False, nullable=True)
     fighterNacionality = db.Column(db.String(30), unique=False, nullable=True)
     page_idpage = db.Column(db.Integer(), unique=True, nullable=False)
@@ -129,7 +129,7 @@ class Group_has_fighter(db.Model):
     fighter_idfighter = db.Column(db.Integer(), unique=True, nullable=False)
     fighter_page_idpage = db.Column(db.Integer(), unique=True, nullable=False)
     relationtype = db.Column(db.Integer(), unique=False, nullable=True)
-    group_has_fighter_entrance = db.Column(db.Date(), unique=False, nullable=True)
+    group_has_fighter_entrance = db.Column(db.Date(), primary_key=True, nullable=True)
     group_has_fightercol_exit = db.Column(db.Date(), unique=False, nullable=True)
 
 class Event(db.Model):
@@ -174,35 +174,45 @@ pageTypeDict = {
         4: Group.query.filter_by,
     }
 
-def frontend_top():
-    tempNav = Navbar(title="Medieval Fights")
+class editorform(FlaskForm):
+    name = StringField()
+    age = DateField()
+    email = StringField()
+    weight =  StringField()
+    height = StringField()
+    mainhand = StringField()
+    nacionality = StringField()
+    sex = StringField()
 
-    tempNav.items += [
-        View('Home', 'index'),
-        View('Clubs', 'index'),
-        View('Fighters', 'index'),
-        View('Teams', 'index'),
-        View('Events', 'index'),
-        View('Sports', 'index'),
-        #View('Latest News', 'news', {'page': 1}),
-    ]
-
-    if current_user.is_authenticated:
-        tempNav.items += [Subgroup(current_user.username,
-                            # View('Perfil', 'frontend.user_profile'),
-                             View('Logout', 'logout'),
-                             )]
-    else:
-        tempNav.items += [Subgroup('Visitante',
-                                   View('Login', 'login'))]
-    return tempNav
+#def frontend_top():
+#    tempNav = Navbar(title="Medieval Fights")
+#
+#    tempNav.items += [
+#        View('Home', 'index'),
+#        View('Clubs', 'index'),
+#        View('Fighters', 'index'),
+#        View('Teams', 'index'),
+#        View('Events', 'index'),
+#        View('Sports', 'index'),
+#        #View('Latest News', 'news', {'page': 1}),
+#    ]
+#
+#    if current_user.is_authenticated:
+#        tempNav.items += [Subgroup(current_user.username,
+#                            # View('Perfil', 'frontend.user_profile'),
+#                             View('Logout', 'logout'),
+#                             )]
+#    else:
+#        tempNav.items += [Subgroup('Visitante',
+#                                   View('Login', 'login'))]
+#    return tempNav
 
 
 # We're adding a navbar as well through flask-navbar. In our example, the
 # navbar has an usual amount of Link-Elements, more commonly you will have a
 # lot more View instances.
-nav.register_element('frontend_top', frontend_top)
-nav.init_app(app)
+#nav.register_element('frontend_top', frontend_top)
+#nav.init_app(app)
 # db.create_all()
 
 
@@ -260,15 +270,16 @@ def route_page(PageAddresi):
     page = Page.query.filter_by(nome=PageAddresi).first()
     user = User.query.filter_by(idUser=str(current_user).strip('<>').replace('User ','')).first()
 
+    if page is not None:
 
-    fighter = Fighter.query.filter_by(page_idpage=page.idpage).first()
-    event = Event.query.filter_by(page_idpage=page.idpage).first()
-    other = Other.query.filter_by(page_idpage=page.idpage).first()
-    club = Group.query.filter_by(page_idpage=page.idpage, type=0).first()
-    team = Group.query.filter_by(page_idpage=page.idpage, type=None).first()
+        fighter = Fighter.query.filter_by(page_idpage=page.idpage).first()
+        event = Event.query.filter_by(page_idpage=page.idpage).first()
+        other = Other.query.filter_by(page_idpage=page.idpage).first()
+        club = Group.query.filter_by(page_idpage=page.idpage, type=0).first()
+        team = Group.query.filter_by(page_idpage=page.idpage, type=None).first()
 
-    if fighter or event or other or club or team:
-        thispagehastype = True
+        if fighter or event or other or club or team:
+            thispagehastype = True
 
 
     if request.method == "POST":
@@ -318,8 +329,206 @@ def route_page(PageAddresi):
                     db.session.commit()
                     return 'Behold! A new other has born!'
             else:
+                if club:
+                    if 'fighter' in request.form or 'capitain' in request.form or 'coach' in request.form or 'mercenary' in request.form:
+                        newplayerpage = None
+                        newplayer = None
+                        newplayeronclub = Group_has_fighter()
+                        newplayerrelation = None
+                        if 'fighter' in request.form:
+                            newplayerpage = Page.query.filter_by(nome=request.form['fighter']).first()
+                            if newplayerpage == None:
+                                flash("You must enter a fighter page name to invite to the club.")
+                                return redirect('/page/' + PageAddresi)
+                            newplayer = Fighter.query.filter_by(page_idpage=newplayerpage.idpage).first()
+                        if request.form['entrance'] == '':
+                            flash("You must enter a entrance date to invite to the club.")
+                            return redirect('/page/' + PageAddresi)
+                        newplayeronclub.group_has_fighter_entrance = request.form['entrance']
+                        newplayeronclub.fighter_idfighter = newplayer.idfighter
+                        newplayeronclub.fighter_page_idpage = newplayerpage.idpage
+                        newplayeronclub.group_page_idpage = page.idpage
+                        newplayeronclub.group_idgroup = club.idgroup
+                        db.session.add(newplayeronclub)
+                        db.session.commit()
+                        flash(newplayer.fighterName + " added to this club")
+                    else:
+                        if 'name' in request.form:
+                            club.groupName = request.form['name']
+                            db.session.add(club)
+                            db.session.commit()
+
+                        if 'email' in request.form:
+                            club.groupEmail = request.form['email']
+                            db.session.add(club)
+                            db.session.commit()
+
+                        if 'logo' in request.files:
+
+                            if club.groupName == None:
+                                flash('You must give this fighter a name before uploading a photo')
+                                return redirect('/page/' + PageAddresi)
+                            if club.groupcol == None:
+                                flash('You must give this fighter a email before uploading a photo')
+                                return redirect('/page/' + PageAddresi)
+                            if club.groupcol == 'None':
+                                flash('You must give this fighter a email before uploading a photo')
+                                return redirect('/page/' + PageAddresi)
+                            file = request.files['logo']
+                            file.filename = club.groupName + "_" + club.groupcol + file.filename[-4::]
+                            file.save(os.path.join(app.config["UPLOAD_FOLDER"], file.filename))
+                            for olderfile in os.listdir(app.config["UPLOAD_FOLDER"]):
+                                if olderfile == club.groupLogo:
+                                    if olderfile != file.filename:
+                                        os.remove(app.config["UPLOAD_FOLDER"]+"/"+olderfile)
+                            club.groupLogo = file.filename
+                            db.session.add(club)
+                            db.session.commit()
+
+                        if 'nacionality' in request.form:
+                            club.groupcol = request.form['nacionality']
+                            db.session.add(club)
+                            db.session.commit()
+                    return redirect('/page/' + PageAddresi)
+
+                if team:
+                    newplayerpage = None
+                    newplayer = None
+                    newplayeronteam = Group_has_fighter()
+                    newplayerrelation = None
+                    if 'fighter' in request.form or 'capitain' in request.form or 'coach' in request.form or 'mercenary' in request.form:
+                        if 'fighter' in request.form:
+                            newplayerpage = Page.query.filter_by(nome=request.form['fighter']).first()
+                            if newplayerpage == None:
+                                flash("You must enter a fighter page name to invite to the team.")
+                                return redirect('/page/' + PageAddresi)
+                            newplayer = Fighter.query.filter_by(page_idpage=newplayerpage.idpage).first()
+                            if Group_has_fighter.query.filter_by(fighter_idfighter=newplayer.idfighter,group_idgroup=team.idgroup,group_has_fighter_entrance=request.form['entrance']).first():
+                                flash('This relation already existis')
+                                return redirect('/page/' + PageAddresi)
+                            newplayeronteam.relationtype = None
+                            newplayerrelation = 'fighter'
+                        if 'capitain' in request.form:
+                            newplayerpage = Page.query.filter_by(nome=request.form['capitain']).first()
+                            if newplayerpage == None:
+                                flash("You must enter a fighter page name to invite to the team.")
+                                return redirect('/page/' + PageAddresi)
+                            newplayer = Fighter.query.filter_by(page_idpage=newplayerpage.idpage).first()
+                            if Group_has_fighter(fighter_idfighter=newplayer.idfighter,group_idgroup=team.idgroup,group_has_fighter_entrance=request.form['entrance']).first():
+                                flash('This relation already existis')
+                                return redirect('/page/' + PageAddresi)
+                            newplayeronteam.relationtype = 0
+                            newplayerrelation = 'capitain'
+                        if 'coach' in request.form:
+                            newplayerpage = Page.query.filter_by(nome=request.form['coach']).first()
+                            if newplayerpage == None:
+                                flash("You must enter a fighter page name to invite to the team.")
+                                return redirect('/page/' + PageAddresi)
+                            newplayer = Fighter.query.filter_by(page_idpage=newplayerpage.idpage).first()
+                            if Group_has_fighter(fighter_idfighter=newplayer.idfighter,group_idgroup=team.idgroup,group_has_fighter_entrance=request.form['entrance']).first():
+                                flash('This relation already existis')
+                                return redirect('/page/' + PageAddresi)
+                            newplayeronteam.relationtype = 1
+                            newplayerrelation = 'coach'
+                        if 'mercenary' in request.form:
+                            newplayerpage = Page.query.filter_by(nome=request.form['mercenary']).first()
+                            if newplayerpage == None:
+                                flash("You must enter a fighter page name to invite to the team.")
+                                return redirect('/page/' + PageAddresi)
+                            newplayer = Fighter.query.filter_by(page_idpage=newplayerpage.idpage).first()
+                            if Group_has_fighter(fighter_idfighter=newplayer.idfighter,group_idgroup=team.idgroup,group_has_fighter_entrance=request.form['entrance']).first():
+                                flash('This relation already existis')
+                                return redirect('/page/' + PageAddresi)
+                            newplayeronteam.relationtype = 2
+                            newplayerrelation = 'mercenary'
+                        if request.form['entrance'] == '':
+                            flash("You must enter a affiliation date date to invite to the team.")
+                            return redirect('/page/' + PageAddresi)
+                        newplayeronteam.group_has_fighter_entrance = request.form['entrance']
+                        newplayeronteam.fighter_idfighter = newplayer.idfighter
+                        newplayeronteam.fighter_page_idpage = newplayerpage.idpage
+                        newplayeronteam.group_page_idpage = page.idpage
+                        newplayeronteam.group_idgroup = team.idgroup
+                        db.session.add(newplayeronteam)
+                        db.session.commit()
+                        if newplayer.fighterName != None:
+                            flash(newplayer.fighterName+" added to this team as "+newplayerrelation)
+                        else:
+                            flash("The fighter has been added to this team as " + newplayerrelation)
+
+                    if 'delete' in request.form:
+                        fpage = Page.query.filter_by(nome=request.form['delete']).first()
+                        thisfighter = Fighter.query.filter_by(page_idpage=fpage.idpage).first()
+                        hasgroup = Group_has_fighter.query.filter_by(group_idgroup=team.idgroup, fighter_idfighter=thisfighter.idfighter, group_has_fighter_entrance=request.form['Affiliation']).first()
+                        db.session.delete(hasgroup)
+                        db.session.add(thisfighter)
+                        db.session.add(team)
+                        db.session.commit()
+
+                    if 'exiter' in request.form:
+                        print(request.form)
+                        fpage = Page.query.filter_by(nome=request.form['exiter']).first()
+                        thisfighter = Fighter.query.filter_by(page_idpage=fpage.idpage).first()
+                        hasgroup = Group_has_fighter.query.filter_by(group_idgroup=team.idgroup, fighter_idfighter=thisfighter.idfighter, group_has_fighter_entrance=request.form['Affiliation']).first()
+                        hasgroup.group_has_fightercol_exit = request.form['exit']
+                        db.session.add(hasgroup)
+                        db.session.add(thisfighter)
+                        db.session.add(team)
+                        db.session.commit()
+
+                    else:
+
+
+                        if 'name' in request.form:
+                            team.groupName = request.form['name']
+                            db.session.add(team)
+                            db.session.commit()
+
+                        if 'email' in request.form:
+                            team.groupEmail = request.form['email']
+                            db.session.add(team)
+                            db.session.commit()
+
+                        if 'logo' in request.files:
+
+                            if team.groupName == None:
+                                flash('You must give this fighter a name before uploading a photo')
+                                return redirect('/page/' + PageAddresi)
+                            if team.groupcol == None:
+                                flash('You must give this fighter a email before uploading a photo')
+                                return redirect('/page/' + PageAddresi)
+                            if team.groupcol == 'None':
+                                flash('You must give this fighter a email before uploading a photo')
+                                return redirect('/page/' + PageAddresi)
+                            file = request.files['logo']
+                            file.filename = team.groupName + "_" + team.groupcol + file.filename[-4::]
+                            file.save(os.path.join(app.config["UPLOAD_FOLDER"], file.filename))
+                            for olderfile in os.listdir(app.config["UPLOAD_FOLDER"]):
+                                if olderfile == team.groupLogo:
+                                    if olderfile != file.filename:
+                                        os.remove(app.config["UPLOAD_FOLDER"]+"/"+olderfile)
+                            team.groupLogo = file.filename
+                            db.session.add(team)
+                            db.session.commit()
+
+                        if 'nacionality' in request.form:
+                            team.groupcol = request.form['nacionality']
+                            db.session.add(team)
+                            db.session.commit()
+
+
+                    return redirect('/page/' + PageAddresi)
 
                 if fighter:
+                    #form = editorform()
+
+                    if 'delete' in request.form:
+                        thisgroup = Group.query.filter_by(groupName=request.form['delete']).first()
+                        hasgroup = Group_has_fighter.query.filter_by(group_idgroup=thisgroup.idgroup,fighter_idfighter=fighter.idfighter,group_has_fighter_entrance=request.form['Affiliation']).first()
+                        db.session.delete(hasgroup)
+                        db.session.add(fighter)
+                        db.session.add(thisgroup)
+                        db.session.commit()
 
                     if 'name' in request.form:
                         fighter.fighterName = request.form['name']
@@ -332,12 +541,27 @@ def route_page(PageAddresi):
                         db.session.commit()
 
                     if 'gif' in request.files:
+
+                        if fighter.fighterName == None:
+                            flash('You must give this fighter a name before uploading a photo')
+                            return redirect('/page/' + PageAddresi)
+                        if fighter.fighterEmail == None:
+                            flash('You must give this fighter a email before uploading a photo')
+                            return redirect('/page/' + PageAddresi)
+                        if fighter.fighterEmail == 'None':
+                            flash('You must give this fighter a email before uploading a photo')
+                            return redirect('/page/' + PageAddresi)
                         file = request.files['gif']
                         file.filename = fighter.fighterName + "_" + fighter.fighterNacionality + file.filename[-4::]
                         file.save(os.path.join(app.config["UPLOAD_FOLDER"], file.filename))
+                        for olderfile in os.listdir(app.config["UPLOAD_FOLDER"]):
+                            if olderfile == fighter.fighterGif:
+                                if olderfile != file.filename:
+                                    os.remove(app.config["UPLOAD_FOLDER"]+"/"+olderfile)
                         fighter.fighterGif = file.filename
                         db.session.add(fighter)
                         db.session.commit()
+
 
                     if 'Height' in request.form:
                         if request.form['Height'] != "":
@@ -387,16 +611,17 @@ def route_page(PageAddresi):
                          db.session.add(fighter)
                          db.session.commit()
 
-                    if 'background' in request.files:
-                        file = request.files['background']
-                        file.filename = fighter.fighterName + "_" + fighter.fighterNacionality + "_background" + file.filename[-4::]
-                        file.save(os.path.join(app.config["UPLOAD_FOLDER"], file.filename))
-                        page.background = file.filename
-                        db.session.add(page)
-                        db.session.commit()
-
 
                     if 'header' in request.files:
+                        if fighter.fighterName == None:
+                            flash('You must give this fighter a name before uploading a header')
+                            return redirect('/page/' + PageAddresi)
+                        if fighter.fighterEmail == None:
+                            flash('You must give this fighter a email before uploading a header')
+                            return redirect('/page/' + PageAddresi)
+                        if fighter.fighterEmail == 'None':
+                            flash('You must give this fighter a email before uploading a header')
+                            return redirect('/page/' + PageAddresi)
                         file = request.files['header']
                         file.filename = fighter.fighterName + "_" + fighter.fighterNacionality + "_header"+ file.filename[-4::]
                         file.save(os.path.join(app.config["UPLOAD_FOLDER"], file.filename))
@@ -405,10 +630,6 @@ def route_page(PageAddresi):
                         db.session.commit()
 
 
-                    if 'icone' in request.form:
-                         page.icone = request.form['icone']
-                         db.session.add(page)
-                         db.session.commit()
 
                     return redirect('/page/' + PageAddresi)
 
@@ -431,7 +652,7 @@ def route_page(PageAddresi):
             #elif team:
             #    return redirect(url_for('route_page'), page=PageAddresi)
     if request.method == "GET":
-        if page is not None:
+        if thispagehastype:
             # definig page content
 
             #typeObject = page.fetchPageTypeObject()
@@ -439,28 +660,44 @@ def route_page(PageAddresi):
 
 
             if fighter:
-                teamshas = Group_has_fighter.query.filter_by(fighter_idfighter=fighter.idfighter,relationtype=None).all()
-                clubshas = Group_has_fighter.query.filter_by(fighter_idfighter=fighter.idfighter,relationtype=0).all()
-                tableteams = {'headers': ['Select', 'Name', 'Editors', 'Status', 'Type'],
-                         'contents': []
-                         }
-                tableclubs = {'headers': ['Select', 'Name', 'Editors', 'Status', 'Type'],
+                grouphas = Group_has_fighter.query.filter_by(fighter_idfighter=fighter.idfighter).all()
+                tableteams = {'headers': ['Team name', 'Role', 'Logo', 'Affiliation date', 'Exit'],
+                             'contents': []
+                              }
+                tableclubs = {'headers': ['Club name', 'Logo', 'Affiliation date', 'Exit'],
                               'contents': []
                               }
-                actualteam = None
-                actualteamlogo = None
-                actualteamname = None
-                for teamhas in teamshas:
-                    if teamhas.group_has_fighter_entrance == None:
-                        actualteamhas = teamhas
-                        teamshas = teamshas - teamhas
-                        actualteam = Group.query.filter_by(idgroup=actualteamhas.group_idgroup)
-                        actualteamlogo = actualteam.groupLogo
-                        actualteamname = actualteam.groupName
-                    Group.query.filter_by(idgroup=teamhas.group_idgroup)
+                for grouph in grouphas:
+                    thisgroup = Group.query.filter_by(idgroup=grouph.group_idgroup).first()
+                    if thisgroup.type == None:
+                        role = None
+                        if grouph.relationtype == None:
+                            role = "Fighter"
+                        if grouph.relationtype == 0:
+                            role = "Capitain"
+                        if grouph.relationtype == 1:
+                            role = "Coach"
+                        if grouph.relationtype == 2:
+                            role = "Mercenary"
+                        eachteam = Group.query.filter_by(idgroup=grouph.group_idgroup).first()
+                        dic ={
+                            'Team name': eachteam.groupName,
+                            'Role': role,
+                            'Logo': eachteam.groupLogo,
+                            'Affiliation date': grouph.group_has_fighter_entrance,
+                            'Exit': grouph.group_has_fightercol_exit,
+                        }
+                        tableteams['contents'].append(dic)
 
-
-                print(actualteam)
+                    if thisgroup.type == 0:
+                        eachteam = Group.query.filter_by(idgroup=grouph.group_idgroup).first()
+                        dic = {
+                            'Club name': eachteam.groupName,
+                            'Logo': eachteam.groupLogo,
+                            'Affiliation date': grouph.group_has_fighter_entrance,
+                            'Exit': grouph.group_has_fightercol_exit,
+                        }
+                        tableclubs['contents'].append(dic)
 
                 return render_template("beko/page/fighter.html", page=PageAddresi,
                                                                 age=fighter.fighterAge,
@@ -476,8 +713,9 @@ def route_page(PageAddresi):
                                                                 header=page.header,
                                                                 icone=page.icone,
                                                                 relation=user,
-                                                                actualteamlogo=actualteamlogo,
-                                                                actualteamname=actualteamname,
+                                                                table = tableteams,
+                                                                tableclub=tableclubs
+
 
 
 
@@ -487,10 +725,49 @@ def route_page(PageAddresi):
             elif other:
                 return render_template("beko/page/other.html", page=PageAddresi)
             elif club:
-                return render_template("beko/page/club.html", page=PageAddresi)
+                return render_template("beko/page/club.html", page=PageAddresi,
+                                                              relation = user,
+                                                              email=club.groupEmail,
+                                                              logo=club.groupLogo,
+                                                              header=page.header,
+                                                              name=club.groupName,
+                                                            nacionality=club.groupcol
+                                       )
             elif team:
+                grouphas = Group_has_fighter.query.filter_by(group_idgroup=team.idgroup).all()
+                tablefighters = {'headers': ['fpage','Fighter name', 'Role', 'Affiliation date', 'Exit'],
+                              'contents': []
+                              }
+                for eachfighter in grouphas:
+                    role = None
+                    if eachfighter.relationtype == None:
+                        role = "Fighter"
+                    if eachfighter.relationtype == 0:
+                        role = "Capitain"
+                    if eachfighter.relationtype == 1:
+                        role = "Coach"
+                    if eachfighter.relationtype == 2:
+                        role = "Mercenary"
+
+                    thisfighter = Fighter.query.filter_by(idfighter=eachfighter.fighter_idfighter).first()
+                    fpage = Page.query.filter_by(idpage=thisfighter.page_idpage).first()
+
+                    dic = {
+                        'fpage' : fpage.nome,
+                        'Fighter name' : thisfighter.fighterName,
+                        'Role' : role,
+                        'Affiliation date': eachfighter.group_has_fighter_entrance,
+                        'Exit': eachfighter.group_has_fightercol_exit
+                         }
+                    tablefighters['contents'].append(dic)
                 return render_template("beko/page/team.html", page=PageAddresi,
-                                                                relation = user,
+                                                              relation = user,
+                                                              email=team.groupEmail,
+                                                              logo=team.groupLogo,
+                                                              header=page.header,
+                                                              name=team.groupName,
+                                                            nacionality=team.groupcol,
+                                                            tablefighter=tablefighters,
                                        )
             else:
                 flash('Select the page type at your page control panel')
