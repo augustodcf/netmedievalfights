@@ -552,7 +552,7 @@ def route_page(PageAddresi):
                             flash('You must give this fighter a email before uploading a photo')
                             return redirect('/page/' + PageAddresi)
                         file = request.files['gif']
-                        file.filename = fighter.fighterName + "_" + fighter.fighterNacionality + file.filename[-4::]
+                        file.filename = fighter.fighterName + "_" + fighter.fighterNacionality + "_" + fighter.fighterEmail.split("@")[0] + "_" + PageAddresi + file.filename[-4::]
                         file.save(os.path.join(app.config["UPLOAD_FOLDER"], file.filename))
                         for olderfile in os.listdir(app.config["UPLOAD_FOLDER"]):
                             if olderfile == fighter.fighterGif:
@@ -623,7 +623,7 @@ def route_page(PageAddresi):
                             flash('You must give this fighter a email before uploading a header')
                             return redirect('/page/' + PageAddresi)
                         file = request.files['header']
-                        file.filename = fighter.fighterName + "_" + fighter.fighterNacionality + "_header"+ file.filename[-4::]
+                        file.filename = fighter.fighterName + "_" + fighter.fighterNacionality + "_" + PageAddresi +"_header"+ file.filename[-4::]
                         file.save(os.path.join(app.config["UPLOAD_FOLDER"], file.filename))
                         page.header = file.filename
                         db.session.add(page)
