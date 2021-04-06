@@ -1,0 +1,133 @@
+<!doctype html>
+{% extends 'beko/navbar.html' %}
+
+{% block content %}
+
+{# Loads some of the macros included with Flask-Bootstrap. We are using the
+   utils module here to automatically render Flask's flashed messages in a
+   bootstrap friendly manner #}
+{% import "bootstrap/utils.html" as utils %}
+
+	
+        {%- with messages = get_flashed_messages(with_categories=True) %}
+
+  {%- if messages %}
+    <div class="row">
+      <div class="col-md-12">
+        {{utils.flashed_messages(messages)}}
+      </div>
+    </div>
+  {%- endif %}
+  {%- endwith %}
+<body style="background-image: /static/page/{{background}}">
+
+{%- if relation != None %}
+<script>
+  function createstage(){
+      document.getElementById('stageinput').submit();
+  };
+  
+  function deleterowitem(element){
+   item = {delete: element.name, type: element.id}; 
+     $.post("/page/{{page}}", item);
+     if (element.id != 'Stage') {
+        document.getElementById(element.name+element.id).innerHTML = "<a style='color:#00FFFF;'>Successfully deleted</a>";
+     }else{
+      
+        rows = document.getElementsByClassName(element.name+element.id);
+        i=0
+        do{
+          rows[i].innerHTML = "<a style='color:#00FFFF;'>Successfully deleted</a>";
+          i = i+1;
+        } while (i<=rows.lenght);
+     }
+        
+  };
+
+  function addfight(element){
+   item = {addfight: element.name} 
+     $.post("/page/{{page}}", item);
+     location.reload();
+  };
+</script>
+
+<div class="createstage" style="margin-right: 35%; margin-left: 35% ;background-color: rgb(69, 77, 85); text-align: center; height: 220px">
+<form class="createstage" action="/page/{{page}}" onsubmit="return false;" id='stageinput' method="post">
+<br><h style="color: white; font-weight: bold;">Create a Stage on the event</h> <br><br> 
+<a style="color: white;">Stage name: </a><input type="text" id="stagename" name="stage" style=" margin-top: 5px" class="form-control"> <br>
+
+</form>
+<button class="btn btn-light" style="margin:5px" onclick="createstage()">Create</button>
+
+
+
+</form>
+</div>
+
+{%- endif %}
+
+
+{% if relation != None %}
+{% do tablestages.headers.append('Manage') %}
+{% endif %}
+      <div id="tablestages" style="margin-top: 15px; margin-left: 5%; margin-right: 5%;">
+        <table class="table table-striped table-dark" >
+
+          <thead>
+            <tr>
+              {% for column in tablestages.headers %}
+                {% if column == 'fpage' %}
+                {% else %}
+              <th>{{column}}</th>
+                {% endif %}
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in tablestages.contents %}
+            <tr>
+              {% for column in tablestages.headers %}
+              {% if column == 'fpage' %}
+              {% else %}
+              <td>
+                {% if column == 'Manage' %}
+                  <div class='{{row["Stage Name"]}}Stage'>
+                  <div id='{{row["Fight"]}}Fight'>
+
+                  <a style="color: white;"><button name='{{row["Stage Name"]}}' id='Stage' class="btn btn-light" onclick="addfight(this)">Add fight</button></a>
+
+                  <button name='{{row["Fight"]}}' id='Fight'  class="btn btn-danger" onclick="deleterowitem(this)">Delete fight</button>
+
+                  <button name='{{row["Stage Name"]}}' id='Stage'  class="btn btn-danger" onclick="deleterowitem(this)">Delete Stage</button>
+
+                      <div >
+                      New contestant (team or club) page name:<input type="text" class="form-control" name='newcontestant'>
+                      <button name='{{row["Stage Name"]}}' id='{{row["Fight"]}}e'  class="btn btn-light" onclick="newcontestant(this)">Add</button>
+                      </form>
+
+                  </div>
+                </div>
+
+               
+                {% else %}
+                  {{row[column]}}
+                {% endif %}
+                
+            
+              </td>
+
+              {% endif %}
+              {% endfor %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+  </form>
+  </div>
+
+
+
+</body>
+{% endblock %}

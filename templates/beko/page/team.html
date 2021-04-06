@@ -1,0 +1,390 @@
+<!doctype html>
+{% extends 'beko/navbar.html' %}
+
+{% block content %}
+
+{# Loads some of the macros included with Flask-Bootstrap. We are using the
+   utils module here to automatically render Flask's flashed messages in a
+   bootstrap friendly manner #}
+{% import "bootstrap/utils.html" as utils %}
+
+	
+        {%- with messages = get_flashed_messages(with_categories=True) %}
+
+  {%- if messages %}
+    <div class="row">
+      <div class="col-md-12">
+        {{utils.flashed_messages(messages)}}
+      </div>
+    </div>
+  {%- endif %}
+  {%- endwith %}
+
+
+
+{%- if relation != None %}
+<script>
+  function fighter(){
+      document.getElementById('fightername').name = 'fighter';
+      document.getElementById('fighterinput').submit();
+  };
+  function capitain(){
+      document.getElementById('fightername').name = 'capitain';
+      document.getElementById('fighterinput').submit();
+  };
+  function coach(){
+      document.getElementById('fightername').name = 'coach';
+      document.getElementById('fighterinput').submit();
+  };
+  function mercenary(){
+      document.getElementById('fightername').name = 'mercenary';
+      document.getElementById('fighterinput').submit();
+  };
+  
+</script>
+
+<script type="text/javascript">
+  function deleterowitem(element){
+    item = {delete: element.name, Affiliation: element.id} 
+      $.post("/page/{{page}}", item);
+      document.getElementById("delete"+element.name+element.id).innerHTML = "<a style='color:#00FFFF;'>Successfully deleted</a>";
+    
+  };
+
+  function insertexit(element){
+    var exitdate = document.getElementById("exit"+element.name+element.id).value
+    var enterdate = element.id
+    if ( enterdate > exitdate ){
+       document.getElementById("feedback").style.visibility = 'visible';
+     } else {
+      item = {exiter: element.name, Affiliation: element.id, exit: document.getElementById("exit"+element.name+element.id).value} 
+      $.post("/page/{{page}}", item);
+      document.getElementById("feedback").style.visibility = 'hidden';
+      document.getElementById("insertexit"+element.name+element.id).innerHTML = "<a style='color:#00FFFF;'>Exit successfully setted</a>";
+    }
+  };
+
+</script>
+
+<div class="invitetoteam" style="margin-right: 35%; margin-left: 35% ;background-color: rgb(69, 77, 85); text-align: center; height: 320px; padding-left: 1.5%; padding-right: 1.5%">
+<form class="invitetoteam" action="/page/{{page}}" onsubmit="return false;" id='fighterinput' method="post">
+<br><h style="color: white; font-weight: bold;">Invite a fighter to the team</h> <br><br> 
+<a style="color: white;">Fighter page name: </a><input type="text" id="fightername" name="todefineonfunction" style=" margin-top: 5px" class="form-control"> <br>
+<a style="color: white;">Affiliation date: </a><input type="date" id="fighterentrance" name="entrance" style=" margin-top: 5px" class="form-control"> <br>
+</form>
+<button class="btn btn-light" style="margin:5px" onclick="fighter()">Fighter</button>
+<button class="btn btn-light" style="margin:5px" onclick="capitain()">Capitain</button>
+<button class="btn btn-light" style="margin:5px" onclick="coach()">Coach</button>
+<button class="btn btn-light" style="margin:5px" onclick="mercenary()">Mercenary</button>
+
+</div>
+   {%- endif %}
+
+
+  <div id="left" style="margin-top: 10px; text-align: left; float: left; width: 40%; margin-left: 5%">
+      <div id="profile" >
+        <a class="bold">Name:</a> {{name}}
+        <br>
+
+        <a class="bold">Email:</a> {{email}}
+        <br>
+
+        <a class="bold">Nacionality:</a> {{nacionality}}
+        <br>
+
+        <br>
+        {%- if relation != None %}
+        <!-- Button trigger modal for edition -->
+        <button id="profile" data-toggle="modal" data-target="#profileeditor">Edit Profile</button>
+        {%- endif %}
+
+      </div>
+
+  </form>
+{% if relation != None %}
+<div id='feedback' style="visibility: hidden;">
+  <div class="alert alert-warning">It is impossible to exit the team before enter. Enter another exit date</div>
+</div>
+{% endif %}
+
+{% if relation != None %}
+{% do tablefighter.headers.append('Delete') %}
+{% endif %}
+      <div id="tablefighter" style="margin-top: 15px">
+        <table class="table table-striped table-dark">
+
+          <thead>
+            <tr>
+              {% for column in tablefighter.headers %}
+                {% if column == 'fpage' %}
+                {% else %}
+              <th>{{column}}</th>
+                {% endif %}
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in tablefighter.contents %}
+            <tr>
+              {% for column in tablefighter.headers %}
+              {% if column == 'fpage' %}
+              {% else %}
+              <td>
+                {% if column == 'Delete' %}
+                  <div id='delete{{row["fpage"]}}{{row["Affiliation date"]}}'>
+                  <button name='{{row["fpage"]}}' id='{{row["Affiliation date"]}}' class="btn btn-danger" onclick="deleterowitem(this)">Delete</button>
+                  </div>
+                {% elif column == 'Exit' %}
+                {% if relation != None %}
+                  {% if row[column] == None %}
+                  <div id='insertexit{{row["fpage"]}}{{row["Affiliation date"]}}'>
+                  <input type='date' name='exit' id='exit{{row["fpage"]}}{{row["Affiliation date"]}}' class="form-control">
+                  <button name='{{row["fpage"]}}' id='{{row["Affiliation date"]}}' class="btn btn-warning" onclick="insertexit(this)">Insert</button>
+                  </div>
+                  {% else %}
+                   {{row[column]}}
+                  {% endif %}
+                  {% else %}
+                 {{row[column]}}
+                {% endif %}
+                {% else %}
+                  {% if column == 'Fighter name' %}
+                  <a href='/page/{{row["fpage"]}}' style="color: white">{{row[column]}}</a>
+                  {% else %}
+                  {{row[column]}}
+                  {% endif %}
+                {% endif %}
+            
+              </td>
+              {% endif %}
+              {% endfor %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+  </div>
+
+<div id="rigt" style="float: right; width: 50%; margin-top: 15px;margin-right: 5%">
+    <div id="profilephoto" >
+      {%- if  logo == None %}
+      <img src="/static/page/standard-photo.png" style="float: right; height: 40%; width: 40%;">
+      {%- else %}
+      <img src="/static/page/{{logo}}" style="float: right; height: 70%; width: 70%;">
+      {%- endif %}
+
+
+      {%- if relation != None %}
+      <button id="photo" data-toggle="modal" data-target="#imageeditor" onclick="uploadphoto()" style="float: right; margin-right: -90px">Edit Logo</button>
+      {%- endif %}
+    </div>
+
+    {%- if relation != None %}
+      <div class="modal fade" id="imageeditor" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+          <div class="modal-content">
+
+            <div class="modal-header">
+              <h5 class="modal-title" id="exampleModalLongTitle">Image Editor</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+
+            <div class="modal-body">
+              <script type="text/javascript">
+
+                function sendimage(){
+                  document.getElementById('imageform').submit();
+                  window.location.href = "/page/"+{{page}};
+                };
+
+              </script>
+              <form id="imageform" method="POST" action="/page/{{page}}" onsubmit="return false;" enctype=multipart/form-data>
+                <input type="file" id="fileupload" accept="image/*">
+
+                <script>
+                  function uploadphoto(){
+                    document.getElementById('fileupload').name = "logo"
+                  };
+
+                  function uploadheader(){
+                    document.getElementById('fileupload').name = "header";
+                  };
+
+
+
+                </script>
+
+
+
+
+              </form>
+
+              <div class="modal-footer">
+                <button value='submit' onclick='sendimage()' style='margin-left: 10px;'class="btn btn-primary">Submit</button>
+                <button type="button" class="btn btn-light" data-dismiss="modal">Close</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal -->
+      <div class="modal fade" id="profileeditor" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+          <div class="modal-content">
+
+            <div class="modal-header">
+              <h5 class="modal-title" id="exampleModalLongTitle">Editor</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+
+            <div class="modal-body">
+              <script>
+                function sendEditor(){
+                  document.getElementById('editorform').submit();
+                  window.location.href = "/page/"+{{page}};
+                };
+
+              </script>
+              <form id="editorform" method="POST" action="/page/{{page}}" onsubmit="return false;">
+
+
+                Name: <input type='text' name='name' value="{{name}}" class="form-control" >     <br>
+                
+                Email: <input type='text' name='email' value="{{email}}" class="form-control" >              
+                <br>
+                
+           
+                Nacionality: 
+                <select name='nacionality' value="{{nacionality}}">      
+                  <option value='Afghanistan'>Afghanistan </option>    
+                  <option value='Angola'>Angola </option>
+                  <option value='Algeria'>Algeria </option>
+                  <option value='Argentina'>Argentina </option>
+                  <option value='Armenia'>Armenia </option>
+                  <option value='Australia'>Australia </option>
+                  <option value='Austria'>Austria </option>
+                  <option value='The_Bahamas'>The Bahamas </option>
+                  <option value='Bangladesh'>Bangladesh </option>
+                  <option value='Belgium'>Belgium </option>
+                  <option value='Bolivia'>Bolivia </option>
+                  <option value='Botswana'>Botswana </option>
+                  <option value='Brazil'>Brazil </option>
+                  <option value='Brunei'>Brunei </option>
+                  <option value='Bulgaria'>Bulgaria </option>
+                  <option value='Cape_Verde'>Cape Verde </option>
+                  <option value='Cameroon'>Cameroon </option>
+                  <option value='Cambodia'>Cambodia </option>
+                  <option value='Canada'>Canada </option>
+                  <option value='China'>China </option>
+                  <option value='Chile'>Chile </option>
+                  <option value='Colombia'>Colombia </option>
+                  <option value='Costa_Rica'>Costa Rica </option>
+                  <option value='Croatia'>Croatia </option>
+                  <option value='Cuba'>Cuba </option>
+                  <option value='Czech_Republic'>Czech Republic </option>
+                  <option value='Democratic_Republic_of_Congo'>Democratic Republic of Congo </option>
+                  <option value='Denmark'>Denmark </option>
+                  <option value='DominicanRepublic'>DominicanRepublic </option>
+                  <option value='East_Timor'>East Timor </option>
+                  <option value='Ecuador'>Ecuador </option>
+                  <option value='Egypt'>Egypt </option>
+                  <option value='England'>England </option>
+                  <option value='Finland'>Finland </option>
+                  <option value='France'>France </option>
+                  <option value='French'>French </option>
+                  <option value='Germany'>Germany </option>
+                  <option value='Greece'>Greece </option>
+                  <option value='Haiti'>Haiti </option>
+                  <option value='Holland'>Holland </option>
+                  <option value='Honduras'>Honduras </option>
+                  <option value='Hungary'>Hungary </option>
+                  <option value='Iceland'>Iceland </option>
+                  <option value='India'>India </option>
+                  <option value='Indonesia'>Indonesia </option>
+                  <option value='Iran'>Iran </option>
+                  <option value='Ireland'>Ireland </option>
+                  <option value='Israel'>Israel </option>
+                  <option value='Italy'>Italy </option>
+                  <option value='Ivory_Coast'>Ivory Coast </option>
+                  <option value='Jamaica'>Jamaica </option>
+                  <option value='Japan'>Japan </option>
+                  <option value='Kwait'>Kwait </option>
+                  <option value='Lebanon'>Lebanon </option>
+                  <option value='Liberia'>Liberia </option>
+                  <option value='Lybia'>Lybia </option>
+                  <option value='Macedonia'>Macedonia </option>
+                  <option value='Malaysia'>Malaysia </option>
+                  <option value='Mexico'>Mexico </option>
+                  <option value='Morocco'>Morocco </option>
+                  <option value='Monaco'>Monaco </option>
+                  <option value='Mongolia'>Mongolia </option>
+                  <option value='Nepal'>Nepal </option>
+                  <option value='NewZealand'>NewZealand </option>
+                  <option value='Nigeria'>Nigeria </option>
+                  <option value='North_Korea'>North Korea </option>
+                  <option value='Norway'>Norway </option>
+                  <option value='Palestine'>Palestine </option>
+                  <option value='Panama'>Panama </option>
+                  <option value='Paraguay'>Paraguay </option>
+                  <option value='Peru'>Peru </option>
+                  <option value='Poland'>Poland </option>
+                  <option value='Portugal'>Portugal </option>
+                  <option value='Qatar'>Qatar </option>
+                  <option value='Romania'>Romania </option>
+                  <option value='Russia'>Russia </option>
+                  <option value='Scotland'>Scotland </option>
+                  <option value='Serbia'>Serbia </option>
+                  <option value='Singapore'>Singapore </option>
+                  <option value='Slovakia'>Slovakia </option>
+                  <option value='Somalia'>Somalia </option>
+                  <option value='South_Africa'>South Africa </option>
+                  <option value='South_Korea'>South Korea </option>
+                  <option value='Spain'>Spain </option>
+                  <option value='Sweden'>Sweden </option>
+                  <option value='Switzerland'>Switzerland </option>
+                  <option value='Syria'>Syria </option>
+                  <option value='Thailand'>Thailand </option>
+                  <option value='Tunisia'>Tunisia </option>
+                  <option value='Turkey'>Turkey </option>
+                  <option value='Uruguay'>Uruguay </option>
+                  <option value='United_Arab_Emirates'>United Arab Emirates </option>
+                  <option value='United_Kingdom'>United Kingdom </option>
+                  <option value='United_States_of_America'>United States of America </option>
+                  <option value='Venezuela'>Venezuela </option>
+                  <option value='Vietnam'>Vietnam </option>
+                  <option value='Wales'>Wales </option>
+                  <option value='Zambia'>Zambia </option>
+                  <option value='Zimbabwe'>Zimbabwe </option>          
+                </select>  
+                <br>
+
+
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button value='submit' onclick='sendEditor()' style='margin-left: 10px;'class="btn btn-primary">Submit</button>
+              <button type="button" class="btn btn-light" data-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      {%- endif %}
+
+
+
+
+
+
+
+
+
+
+{% endblock %}

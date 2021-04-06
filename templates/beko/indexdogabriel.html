@@ -1,0 +1,202 @@
+
+
+
+
+<head>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+
+
+
+</head>
+<body style="background-color: rgb(21, 32, 43);" >
+
+
+{% block styles -%}
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"> 
+    <!--link rel="stylesheet" type="text/css" href="{{url_for('static', filename='/css/bootstrap.css')}}">
+    <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='/css/bootstrap-theme.css')}}"-->
+
+{% endblock %}
+
+{% block navbar %}
+{{nav.frontend_top.render()}}
+{% endblock %}
+
+<style>
+ .jumbotron {
+  margin-top: 1em;  // add a little space
+}
+
+#slide_background {
+  transition: all 0.3s 0.3s;
+}
+#slide,
+#slide_wrapper {
+  transition: all 0.3s ease-out;
+}
+#slide {
+  transform: translateX(0) translateY(-40%);
+}
+.popup_visible #slide {
+  transform: translateX(0) translateY(0);
+}
+
+
+
+.container
+{
+    margin-top: 5px;
+    width: 98%;
+}
+
+
+
+p
+{
+    padding: 0px;
+}
+.form-signin
+{
+
+    text-align: center;
+    margin: auto;
+    width: 300px;
+}
+
+
+.col-md-12
+{
+    width:100%;
+}
+
+.alert
+{
+    width: 300px;
+    margin: auto;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.panel-title
+{
+    padding-top:0px;
+}
+
+.navbar-brand, .navbar>.container-fluid .navbar-brand
+{
+    background-image: url(/favicon.ico);
+    background-repeat: no-repeat;
+    font-size: 32px;
+    padding-left: 60px;
+    margin-left: 5px;
+}
+
+.navbar-nav
+{
+    float: right;
+    flex-direction: row;
+}
+
+.navbar
+{
+    margin-botton:0px;
+}
+
+#map {
+    height: 400px;
+}
+
+.formfield
+{
+    padding: 10px;
+}
+
+.td, .th{
+    table-layout: fixed;
+    word-wrap: break-word;
+    word-break: break-all;
+    padding: 0px;
+    vertical-align: baseline;
+}
+
+.btn-alignRight {
+    float: right;
+}
+
+.btn-group
+{
+    display: flex;
+}
+.btn-group>.btn
+{
+    width: 40px;
+}
+
+.profile_img
+{
+    width: 250px;
+    height: 250px;
+    border-radius: 50%;
+}
+
+.profile_head
+{
+    padding-botton: 20px;
+    text-align: center;
+}
+
+.profile_body
+{
+    padding-botton: 20px;
+    text-align: center;
+}
+
+.profile_footer
+{
+    text-align: center;
+}
+
+</style>
+<!--
+<video style="z-index:-1;" src="{{url_for('static', filename='video/armadures.mp4')}}" autoplay="true" loop="true" width="100%" muted="true">
+</video>
+
+<n1>
+
+    <search> PESQUISA </search>
+    <news> TESTE </news>
+
+</n1>
+
+<style>
+
+    n1 {
+    position: absolute; 
+    top: 12%; 
+    left: 0; 
+    width: 100%;
+    height: 100%;
+
+
+    }
+    n1 news {
+    position: relative; 
+    width: 50%;
+    height: 100%;
+    float: right;
+    background-image: linear-gradient(rgba(0%, 0%, 0%, .0), black);
+
+    n1 search{
+    position: relative; 
+    width: 50%;
+    float: left;
+
+    }
+}
+-->
+</body>
+

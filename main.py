@@ -141,6 +141,29 @@ class Event(db.Model):
     eventPage = db.Column(db.String(45), unique=False, nullable=True)
     eventLocation = db.Column(db.String(45), unique=False, nullable=True)
 
+class Stage(db.Model):
+    idStage = db.Column(db.Integer(), primary_key=True, nullable=False)
+    event_idevent = db.Column(db.Integer(), unique=False, nullable=False)
+    event_page_idpage = db.Column(db.Integer(), unique=False, nullable=False)
+    stageName = db.Column(db.String(45), unique=False, nullable=True)
+
+class Fight(db.Model):
+    idfight  = db.Column(db.Integer(), primary_key=True, nullable=False)
+    stage_idstage  = db.Column(db.Integer(), unique=True, nullable=False)
+    fightdate = db.Column(db.Date(), unique=False, nullable=True)
+    judge_idjudge = db.Column(db.Integer(), unique=False, nullable=True)
+
+class Fight_has_group(db.Model):
+    fight_idfight = db.Column(db.Integer(), primary_key=True, nullable=False)
+    fight_stage_idStage = db.Column(db.Integer(), primary_key=True, nullable=False)
+    fight_stage_Event_page_idpage = db.Column(db.Integer(), unique=False, nullable=True)
+    fight_stage_Event_id = db.Column(db.Integer(), unique=False, nullable=True)
+    group_idgroup = db.Column(db.Integer(), primary_key=True, nullable=False)
+    group_page_idpage = db.Column(db.Integer(), primary_key=True, nullable=False)
+    fight_has_group_result = db.Column(db.Integer(), unique=False, nullable=True)
+    idfight_has_group  = db.Column(db.Integer(), primary_key=True, nullable=False)
+
+
 class Other(db.Model):
     idother = db.Column(db.Integer(), primary_key=True, nullable=False)
     page_idpage = db.Column(db.Integer(), unique=True, nullable=False)
@@ -329,6 +352,62 @@ def route_page(PageAddresi):
                     db.session.commit()
                     return 'Behold! A new other has born!'
             else:
+                if event:
+
+                    if 'newcontestant' in request.form:
+                        newfhg = Group_has_fighter()
+                        newfhg.fighter_page_idpage = request.form['newcontestant']
+                        newfhg.g
+
+                    if 'addfight' in request.form:
+                        newfight = Fight()
+                        stage = Stage.query.filter_by(stageName=request.form['addfight'],event_idevent=event.idevent).first()
+                        newfight.stage_idstage = stage.idStage
+                        db.session.add(newfight)
+                        db.session.commit()
+
+                    if 'delete' in request.form:
+                        if request.form['type'] == 'Fight':
+                            fighttodelete = Fight.query.filter_by(idfight=request.form['delete']).first()
+                            db.session.delete(fighttodelete)
+                            db.session.commit()
+
+                        if request.form['type'] == 'Stage':
+                            stagetodelete = Stage.query.filter_by(stageName=request.form['delete']).first()
+                            if stagetodelete:
+                                allstagefights = Fight.query.filter_by(stage_idstage=stagetodelete.idStage).all()
+                                if allstagefights != []:
+                                    for eachstagefight in allstagefights:
+                                        if eachstagefight != None:
+                                            allfhg = Fight_has_group.query.filter_by(fight_idfight=eachstagefight.idfight).all()
+                                            for eachfhg in allfhg:
+                                                if eachfhg != None:
+                                                    db.session.delete(eachfhg)
+                                            db.session.delete(eachstagefight)
+                                db.session.delete(stagetodelete)
+                                db.session.add(event)
+                                db.session.commit()
+
+                            else:
+                                flash("Stage doesn't exists")
+
+                        return redirect('/page/' + PageAddresi)
+
+
+                    if 'stage' in request.form:
+                        if Stage.query.filter_by(stageName=request.form['stage'],event_idevent=event.idevent).first():
+                            flash("It can't create a stage with this name in this event. Try a different stage name.")
+                        else:
+                            newstage = Stage()
+                            newstage.stageName = request.form['stage']
+                            newstage.event_idevent = event.idevent
+                            pageid = page.query.filter_by(nome = PageAddresi).first()
+                            newstage.event_page_idpage = pageid.idpage
+                            db.session.add(event)
+                            db.session.add(newstage)
+                            db.session.commit()
+                            flash(newstage.stageName+" stage created.")
+                    return redirect('/page/' + PageAddresi)
                 if club:
                     if 'fighter' in request.form or 'capitain' in request.form or 'coach' in request.form or 'mercenary' in request.form:
                         newplayerpage = None
@@ -389,6 +468,27 @@ def route_page(PageAddresi):
                             club.groupcol = request.form['nacionality']
                             db.session.add(club)
                             db.session.commit()
+
+                    if 'delete' in request.form:
+                        fpage = Page.query.filter_by(nome=request.form['delete']).first()
+                        thisfighter = Fighter.query.filter_by(page_idpage=fpage.idpage).first()
+                        hasgroup = Group_has_fighter.query.filter_by(group_idgroup=club.idgroup, fighter_idfighter=thisfighter.idfighter, group_has_fighter_entrance=request.form['Affiliation']).first()
+                        db.session.delete(hasgroup)
+                        db.session.add(thisfighter)
+                        db.session.add(club)
+                        db.session.commit()
+
+                    if 'exiter' in request.form:
+                        print(request.form)
+                        fpage = Page.query.filter_by(nome=request.form['exiter']).first()
+                        thisfighter = Fighter.query.filter_by(page_idpage=fpage.idpage).first()
+                        hasgroup = Group_has_fighter.query.filter_by(group_idgroup=club.idgroup, fighter_idfighter=thisfighter.idfighter, group_has_fighter_entrance=request.form['Affiliation']).first()
+                        hasgroup.group_has_fightercol_exit = request.form['exit']
+                        db.session.add(hasgroup)
+                        db.session.add(thisfighter)
+                        db.session.add(club)
+                        db.session.commit()
+
                     return redirect('/page/' + PageAddresi)
 
                 if team:
@@ -414,9 +514,6 @@ def route_page(PageAddresi):
                                 flash("You must enter a fighter page name to invite to the team.")
                                 return redirect('/page/' + PageAddresi)
                             newplayer = Fighter.query.filter_by(page_idpage=newplayerpage.idpage).first()
-                            if Group_has_fighter(fighter_idfighter=newplayer.idfighter,group_idgroup=team.idgroup,group_has_fighter_entrance=request.form['entrance']).first():
-                                flash('This relation already existis')
-                                return redirect('/page/' + PageAddresi)
                             newplayeronteam.relationtype = 0
                             newplayerrelation = 'capitain'
                         if 'coach' in request.form:
@@ -425,9 +522,6 @@ def route_page(PageAddresi):
                                 flash("You must enter a fighter page name to invite to the team.")
                                 return redirect('/page/' + PageAddresi)
                             newplayer = Fighter.query.filter_by(page_idpage=newplayerpage.idpage).first()
-                            if Group_has_fighter(fighter_idfighter=newplayer.idfighter,group_idgroup=team.idgroup,group_has_fighter_entrance=request.form['entrance']).first():
-                                flash('This relation already existis')
-                                return redirect('/page/' + PageAddresi)
                             newplayeronteam.relationtype = 1
                             newplayerrelation = 'coach'
                         if 'mercenary' in request.form:
@@ -436,9 +530,6 @@ def route_page(PageAddresi):
                                 flash("You must enter a fighter page name to invite to the team.")
                                 return redirect('/page/' + PageAddresi)
                             newplayer = Fighter.query.filter_by(page_idpage=newplayerpage.idpage).first()
-                            if Group_has_fighter(fighter_idfighter=newplayer.idfighter,group_idgroup=team.idgroup,group_has_fighter_entrance=request.form['entrance']).first():
-                                flash('This relation already existis')
-                                return redirect('/page/' + PageAddresi)
                             newplayeronteam.relationtype = 2
                             newplayerrelation = 'mercenary'
                         if request.form['entrance'] == '':
@@ -721,17 +812,82 @@ def route_page(PageAddresi):
 
                                        )
             elif event:
-                return render_template("beko/page/event.html", page=PageAddresi)
+                tablestages = {'headers': ['Stage Name','Fight','Date','Contestants'],
+                             'contents': []
+                              }
+                allstages = Stage.query.filter_by(event_idevent=Event.idevent).all()
+                for stage in allstages:
+                    allstagefights = Fight.query.filter_by(stage_idstage=stage.idStage).all()
+
+                    if len(allstagefights) == 0:
+                        dic = {
+                            'Stage Name': stage.stageName,
+                            'Fight': None,
+                            'Date': None,
+                            'Contestants': None,
+                        }
+
+                        tablestages['contents'].append(dic)
+
+                    else:
+                        for eachfight in allstagefights:
+                            fightgroups = Fight_has_group.query.filter_by(fight_idfight=eachfight.idfight).all()
+                            allcontestants = ""
+                            if len(fightgroups) == 0:
+                                allcontestants = None
+                            else:
+                                i=0
+                                for eachgroup in fightgroups:
+                                    thegroup = Group.query.flter_by(idgroup = eachgroup.group_idgroup).first()
+                                    if i == 0:
+                                        allcontestants.append = thegroup.groupName
+                                    else:
+                                        allcontestants.append = (' X '+thegroup.groupName)
+                                    i += 1
+
+
+
+                            dic = {
+                                'Stage Name': stage.stageName,
+                                'Fight': eachfight.idfight,
+                                'Date': eachfight.fightdate,
+                                'Contestants': allcontestants ,
+                            }
+                            tablestages['contents'].append(dic)
+
+
+
+                return render_template("beko/page/event.html", page=PageAddresi
+                                                            ,tablestages=tablestages
+                                                            ,relation=user
+                                       )
             elif other:
                 return render_template("beko/page/other.html", page=PageAddresi)
             elif club:
+                grouphas = Group_has_fighter.query.filter_by(group_idgroup=club.idgroup).all()
+                tablefighters = {'headers': ['fpage', 'Fighter name', 'Affiliation date', 'Exit'],
+                                 'contents': []
+                                 }
+                for eachfighter in grouphas:
+
+                    thisfighter = Fighter.query.filter_by(idfighter=eachfighter.fighter_idfighter).first()
+                    fpage = Page.query.filter_by(idpage=thisfighter.page_idpage).first()
+
+                    dic = {
+                        'fpage': fpage.nome,
+                        'Fighter name': str(thisfighter.fighterName),
+                        'Affiliation date': eachfighter.group_has_fighter_entrance,
+                        'Exit': eachfighter.group_has_fightercol_exit
+                    }
+                    tablefighters['contents'].append(dic)
                 return render_template("beko/page/club.html", page=PageAddresi,
                                                               relation = user,
                                                               email=club.groupEmail,
                                                               logo=club.groupLogo,
                                                               header=page.header,
                                                               name=club.groupName,
-                                                            nacionality=club.groupcol
+                                                            nacionality=club.groupcol,
+                                                            tablefighter=tablefighters,
                                        )
             elif team:
                 grouphas = Group_has_fighter.query.filter_by(group_idgroup=team.idgroup).all()
@@ -988,15 +1144,27 @@ def pageadmo():
                     fighter = Fighter.query.filter_by(page_idpage=page.idpage).first()
                     event = Event.query.filter_by(page_idpage=page.idpage).first()
                     other = Other.query.filter_by(page_idpage=page.idpage).first()
-                    club = Group.query.filter_by(page_idpage=page.idpage).first()
+                    group = Group.query.filter_by(page_idpage=page.idpage).first()
                     if fighter is not None:
+                        ghfs = Group_has_fighter.query.filter_by(fighter_idfighter=fighter.idfighter).all()
+                        for ghf in ghfs:
+                            db.session.delete(ghf)
                         db.session.delete(fighter)
                     if event is not None:
+                        stages = Stage.query.filter_by(event_idevent=event.idevent).all()
+                        for stage in stages:
+                            stagefights = Fight.query.filter_by(stage_idstage=stage.idStage).all()
+                            for fight in stagefights:
+                                db.session.delete(fight)
+                            db.session.delete(stage)
                         db.session.delete(event)
                     if other is not None:
                         db.session.delete(other)
-                    if club is not None:
-                        db.session.delete(club)
+                    if group is not None:
+                        ghfs = Group_has_fighter.query.filter_by(group_idgroup=group.idgroup).all()
+                        for ghf in ghfs:
+                            db.session.delete(ghf)
+                        db.session.delete(group)
 
                     flash("Page "+check+" deleted.")
                     # deleting relations
